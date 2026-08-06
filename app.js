@@ -98,7 +98,7 @@ function renderLog() {
             `<span class="slot-act${archived ? ' archived' : ''}">${esc(covering.activity)}</span>` +
             `<span class="slot-sub">${fmtT(covering.start)} \u2013 ${fmtT(covering.start + covering.dur)}</span>` +
           `</div>` +
-          `<span class="slot-val">${'$'.repeat(covering.value)}</span>`;
+          `<span class="slot-val">${covering.value ? '$'.repeat(covering.value) : '\u2013'}</span>`;
         slot.appendChild(c);
         const del = document.createElement('button');
         del.className = 'del';
@@ -443,11 +443,13 @@ function renderAnalysis() {
   }
 
   const total = list.reduce((s, e) => s + e.dur, 0);
+  const neutral = list.filter(e => e.value === 0).reduce((s, e) => s + e.dur, 0);
+  const rated = total - neutral;
   const needle = list.filter(e => e.value === 3).reduce((s, e) => s + e.dur, 0);
   const green = list.filter(e => e.energy > 0).reduce((s, e) => s + e.dur, 0);
   const red = total - green;
   const byVal = { 1: 0, 2: 0, 3: 0 };
-  list.forEach(e => { byVal[e.value] += e.dur; });
+  list.forEach(e => { if (e.value > 0) byVal[e.value] += e.dur; });
   const byAct = {};
   list.forEach(e => {
     const a = byAct[e.activity] || (byAct[e.activity] = { min: 0, g: 0, r: 0 });
@@ -455,10 +457,12 @@ function renderAnalysis() {
     if (e.energy > 0) a.g += e.dur; else a.r += e.dur;
   });
 
-  // Needle Mover
+  // Needle Mover (nur bewertete Zeit)
+  const needlePct = rated > 0 ? Math.round(needle / rated * 100) : 0;
   box.appendChild(card('Needle Mover',
-    `<div class="needle-num">${Math.round(needle / total * 100)}%</div>` +
-    `<div class="hint">$$$-Zeit: ${fmtDur(needle)} von ${fmtDur(total)} geloggt</div>`));
+    `<div class="needle-num">${needlePct}%</div>` +
+    `<div class="hint">$$$-Zeit: ${fmtDur(needle)} von ${fmtDur(rated)} bewerteter Zeit` +
+    (neutral > 0 ? ` \u00B7 ${fmtDur(neutral)} unbewertet` : '') + `</div>`));
 
   // Zeit pro Aktivitaet (Balken relativ zum Maximum, Farbe = Energie-Bilanz)
   const sorted = Object.entries(byAct).sort((a, b) => b[1].min - a[1].min);
@@ -469,14 +473,17 @@ function renderAnalysis() {
     ).join('') +
     `<div class="hint">Farbe = Energie-Bilanz der Aktivitaet</div>`));
 
-  // $-Verteilung (Anteil an geloggter Zeit)
+  // $-Verteilung (Anteil an bewerteter Zeit)
   box.appendChild(card('$-Verteilung',
     [3, 2, 1].map(v =>
-      barRow(`<span style="color:var(--gold);font-weight:700">${'$'.repeat(v)}</span>`,
-        Math.round(byVal[v] / total * 100), 'var(--gold)',
-        `${fmtDur(byVal[v])} \u00B7 ${Math.round(byVal[v] / total * 100)}%`)
+      barRow(`<span style="color:var(--amber);font-weight:700">${'$'.repeat(v)}</span>`,
+        rated > 0 ? Math.round(byVal[v] / rated * 100) : 0, 'var(--amber)',
+        `${fmtDur(byVal[v])} \u00B7 ${rated > 0 ? Math.round(byVal[v] / rated * 100) : 0}%`)
     ).join('') +
-    `<div class="hint">$ = Busywork \u00B7 $$ = wichtig \u00B7 $$$ = bewegt die Nadel</div>`));
+    (neutral > 0 ? barRow('<span style="color:var(--muted)">\u2013</span>',
+      Math.round(neutral / total * 100), 'var(--muted-2)',
+      `${fmtDur(neutral)} \u00B7 ${Math.round(neutral / total * 100)}%`) : '') +
+    `<div class="hint">$ = Busywork \u00B7 $$ = wichtig \u00B7 $$$ = bewegt die Nadel \u00B7 \u2013 = unbewertet</div>`));
 
   // Energie-Bilanz
   box.appendChild(card('Energie-Bilanz',
