@@ -38,6 +38,31 @@ const dayEntries = () => entries[key()] || [];
 const winStart = () => Math.floor(dayData().wake / raster) * raster;
 const winEnd = () => winStart() + (dayData().span || DEFAULT_SPAN) * 60;
 
+/* ================= Undo / Toast ================= */
+let history = [];   // [{ k, data }] — Snapshots der Tages-Eintraege
+let toastTimer = null;
+
+function pushHistory() {
+  history.push({ k: key(), data: JSON.parse(JSON.stringify(dayEntries())) });
+  if (history.length > 20) history.shift();
+}
+
+function showToast(msg) {
+  $('#toast-msg').textContent = msg;
+  $('#toast').classList.remove('hidden');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => $('#toast').classList.add('hidden'), 3000);
+}
+
+function undo() {
+  const h = history.pop();
+  if (!h) { $('#toast').classList.add('hidden'); return; }
+  entries[h.k] = h.data;
+  save(LS.entries, entries);
+  renderLog();
+  $('#toast').classList.add('hidden');
+}
+
 /* ================= Timeline ================= */
 function renderLog() {
   const tl = $('#timeline');
@@ -184,12 +209,34 @@ function renderWakePrompt(tl, edit) {
 /* ================= Stempeln ================= */
 function stamp(t) {
   if (!sel.activity) { openNewActivity(); return; }
-  const D = durSel || raster;
   const k = key();
+  const list = dayEntries();
+  const sameProps = e => e.activity === sel.activity && e.value === sel.value && e.energy === sel.energy;
+
+  // Toggle: gleicher Stempel auf gefuelltem Block -> diesen Raster-Slot aus dem Eintrag entfernen
+  const covering = list.find(e => t >= e.start && t < e.start + e.dur);
+  if (covering && sameProps(covering)) {
+    pushHistory();
+    const out = [];
+    for (const e of list) {
+      if (t >= e.start && t < e.start + e.dur) {
+        if (e.start < t) out.push({ ...e, id: uid(), dur: t - e.start });
+        if (t + raster < e.start + e.dur) out.push({ ...e, id: uid(), start: t + raster, dur: e.start + e.dur - (t + raster) });
+      } else out.push(e);
+    }
+    entries[k] = out;
+    save(LS.entries, entries);
+    showToast('Entfernt');
+    renderLog();
+    return;
+  }
+
+  const D = durSel || raster;
+  pushHistory();
   const out = [];
 
   // Ueberlappungen mit [t, t+D) entfernen bzw. aufteilen
-  for (const e of dayEntries()) {
+  for (const e of list) {
     const s = e.start, en = e.start + e.dur;
     if (en <= t || s >= t + D) { out.push(e); continue; }
     if (s < t) out.push({ ...e, id: uid(), dur: t - s });
@@ -197,9 +244,8 @@ function stamp(t) {
   }
 
   // Mit gleichen Nachbarn verschmelzen
-  const same = e => e.activity === sel.activity && e.value === sel.value && e.energy === sel.energy;
-  const prev = out.find(e => e.start + e.dur === t && same(e));
-  const next = out.find(e => e.start === t + D && same(e));
+  const prev = out.find(e => e.start + e.dur === t && sameProps(e));
+  const next = out.find(e => e.start === t + D && sameProps(e));
   if (prev && next) { prev.dur += D + next.dur; out.splice(out.indexOf(next), 1); }
   else if (prev) { prev.dur += D; }
   else if (next) { next.start = t; next.dur += D; }
@@ -213,13 +259,16 @@ function stamp(t) {
   renderChips();
   renderDur();
   renderLog();
+  showToast('Gespeichert');
   if (navigator.vibrate) navigator.vibrate(8);
 }
 
 function removeEntry(id) {
+  pushHistory();
   entries[key()] = dayEntries().filter(e => e.id !== id);
   save(LS.entries, entries);
   renderLog();
+  showToast('Gelöscht');
 }
 
 /* ================= Chips / Stamp-Bar ================= */
@@ -437,6 +486,7 @@ function init() {
 
   $('#add-activity-btn').addEventListener('click', addActivity);
   $('#new-activity-input').addEventListener('keydown', e => { if (e.key === 'Enter') addActivity(); });
+  $('#undo-btn').addEventListener('click', undo);
 
   refresh();
 }

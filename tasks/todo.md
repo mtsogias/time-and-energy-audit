@@ -35,3 +35,11 @@
 **Datenmodell (localStorage):** `tea_days` (Wake/Span pro Tag), `tea_entries` (Einträge pro Tag), `tea_acts` (Chips), `tea_sel` (letzte Stempel-Auswahl), `tea_raster`.
 
 **Bekannte Grenzen / v2-Ideen:** Daten nur auf dem Gerät (kein Sync/Export), keine Push-Erinnerungen, keine Notiz pro Block, keine Schlafdauer-Analyse.
+
+---
+
+## Fixes Runde 1 (Feedback Michael, 06.08.2026)
+- [x] Safe-Area oben: `.topbar` bekommt `padding-top: env(safe-area-inset-top)` — Header ragte im Homescreen-Modus in die iPhone-Statusleiste
+- [x] Toggle-Entfernen: gefüllten Block mit gleichem Stempel nochmal antippen → dieser Raster-Slot wird aus dem Eintrag entfernt (Split). Löst "Block war zu lang, wie nehme ich Zeiten raus"
+- [x] Gespeichert-Feedback + Rückgängig: Toast-Zeile in der Stamp-Bar ("Gespeichert"/"Entfernt"/"Gelöscht" + Undo-Button, 3s sichtbar, History bis 20 Schritte)
+- [x] Getestet via Playwright: Merge 60 Min → Toggle zurück auf 30 Min → Undo entfernt letzten Eintrag — alles korrekt, Screenshots verifiziert
