@@ -92,9 +92,10 @@ function renderLog() {
       if (isStart) {
         const c = document.createElement('div');
         c.className = 'slot-content';
+        const archived = !acts.includes(covering.activity);
         c.innerHTML =
           `<div class="slot-main">` +
-            `<span class="slot-act">${esc(covering.activity)}</span>` +
+            `<span class="slot-act${archived ? ' archived' : ''}">${esc(covering.activity)}</span>` +
             `<span class="slot-sub">${fmtT(covering.start)} \u2013 ${fmtT(covering.start + covering.dur)}</span>` +
           `</div>` +
           `<span class="slot-val">${'$'.repeat(covering.value)}</span>`;
@@ -345,7 +346,7 @@ function selectChip(name) {
 }
 
 function askDeleteChip(name) {
-  if (confirm('"' + name + '" entfernen? Bestehende Eintraege behalten diese Aktivitaet.')) {
+  if (confirm('"' + name + '" aus der Schnellauswahl entfernen?\n\nVorhandene Eintraege bleiben erhalten und werden kursiv angezeigt. Neu hinzufuegen jederzeit ueber "+ Neu" mit gleichem Namen.')) {
     removeChip(name);
   }
 }
@@ -355,6 +356,8 @@ function removeChip(name) {
   save(LS.acts, acts);
   if (sel.activity === name) { sel.activity = acts[0] || null; save(LS.sel, sel); }
   renderChips();
+  renderLog();
+  if (view === 'analyse') renderAnalysis();
 }
 
 function openNewActivity() {
@@ -462,7 +465,7 @@ function renderAnalysis() {
   const max = sorted[0][1].min;
   box.appendChild(card('Zeit pro Aktivitaet',
     sorted.map(([n, a]) =>
-      barRow(esc(n), Math.round(a.min / max * 100), a.g >= a.r ? 'var(--green)' : 'var(--red)', fmtDur(a.min))
+      barRow(acts.includes(n) ? esc(n) : `<i>${esc(n)}</i>`, Math.round(a.min / max * 100), a.g >= a.r ? 'var(--green)' : 'var(--red)', fmtDur(a.min))
     ).join('') +
     `<div class="hint">Farbe = Energie-Bilanz der Aktivitaet</div>`));
 

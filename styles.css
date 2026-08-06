@@ -86,6 +86,7 @@ button { font: inherit; color: inherit; background: none; border: none; cursor: 
 .slot-content { flex: 1; display: flex; align-items: center; justify-content: space-between; gap: 8px; min-width: 0; }
 .slot-main { display: flex; flex-direction: column; min-width: 0; }
 .slot-act { font-weight: 600; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.slot-act.archived { font-style: italic; opacity: 0.55; }
 .slot-sub { color: var(--muted); font-size: 11px; font-variant-numeric: tabular-nums; }
 .slot-val { color: var(--gold); font-weight: 800; font-size: 14px; flex: none; }
 .del { color: var(--muted); font-size: 18px; padding: 0 6px; flex: none; line-height: 1; }
