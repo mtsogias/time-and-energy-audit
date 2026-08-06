@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0e0e13">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Time &amp; Energy Audit</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-row">
+      <div class="tabs">
+        <button id="tab-log" class="tab active">Log</button>
+        <button id="tab-analyse" class="tab">Analyse</button>
+      </div>
+      <div id="raster-toggle" class="seg">
+        <button data-raster="15">15 Min</button>
+        <button data-raster="30" class="active">30 Min</button>
+      </div>
+      <div id="range-toggle" class="seg hidden">
+        <button data-range="day" class="active">Tag</button>
+        <button data-range="week">7 Tage</button>
+      </div>
+    </div>
+    <div class="topbar-row">
+      <div class="daynav">
+        <button id="prev-day" class="navbtn" aria-label="Tag zurueck">&#8249;</button>
+        <button id="day-label" class="daylabel">Heute</button>
+        <button id="next-day" class="navbtn" aria-label="Tag vor">&#8250;</button>
+      </div>
+      <button id="now-btn" class="nowbtn"><span class="nowdot"></span>Jetzt</button>
+    </div>
+  </header>
+
+  <main id="log-view">
+    <div id="timeline"></div>
+  </main>
+
+  <main id="analyse-view" class="hidden">
+    <div id="analysis"></div>
+  </main>
+
+  <div id="stampbar">
+    <div id="activity-chips"></div>
+    <div id="new-activity-row" class="hidden">
+      <input id="new-activity-input" type="text" placeholder="Neue Aktivitaet..." maxlength="30" autocomplete="off">
+      <button id="add-activity-btn">OK</button>
+    </div>
+    <div class="stamp-row">
+      <div id="value-select" class="seg gold">
+        <button data-v="1">$</button>
+        <button data-v="2" class="active">$$</button>
+        <button data-v="3">$$$</button>
+      </div>
+      <div id="energy-select" class="seg">
+        <button data-e="1" class="e-green active"><span class="dot green"></span>Gibt Energie</button>
+        <button data-e="-1" class="e-red"><span class="dot red"></span>Zieht Energie</button>
+      </div>
+    </div>
+    <div class="stamp-row">
+      <span class="dur-label">Dauer</span>
+      <div id="dur-select" class="seg">
+        <button data-d="0" class="active">1 Block</button>
+        <button data-d="60">1h</button>
+        <button data-d="120">2h</button>
+        <button data-d="180">3h</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
