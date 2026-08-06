@@ -16,11 +16,7 @@
         <button id="tab-log" class="tab active">Log</button>
         <button id="tab-analyse" class="tab">Analyse</button>
       </div>
-      <div id="raster-toggle" class="seg">
-        <button data-raster="15">15 Min</button>
-        <button data-raster="30" class="active">30 Min</button>
-      </div>
-      <div id="range-toggle" class="seg hidden">
+    <div id="range-toggle" class="seg hidden">
         <button data-range="day" class="active">Tag</button>
         <button data-range="week">7 Tage</button>
       </div>
@@ -44,7 +40,6 @@
   </main>
 
   <div id="stampbar">
-    <div id="toast" class="hidden"><span id="toast-msg"></span><button id="undo-btn">Rückgängig</button></div>
     <div id="activity-chips"></div>
     <div id="new-activity-row" class="hidden">
       <input id="new-activity-input" type="text" placeholder="Neue Aktivitaet..." maxlength="30" autocomplete="off">
@@ -61,14 +56,10 @@
         <button data-e="-1" class="e-red"><span class="dot red"></span>Zieht Energie</button>
       </div>
     </div>
-    <div class="stamp-row">
-      <span class="dur-label">Dauer</span>
-      <div id="dur-select" class="seg">
-        <button data-d="0" class="active">1 Block</button>
-        <button data-d="60">1h</button>
-        <button data-d="120">2h</button>
-        <button data-d="180">3h</button>
-      </div>
+    <div class="stamp-row dur-row">
+      <button id="dur-minus" class="dur-btn" aria-label="Kuerzer">&minus;</button>
+      <span id="dur-text" class="dur-text">Block antippen</span>
+      <button id="dur-plus" class="dur-btn" aria-label="Laenger">+</button>
     </div>
   </div>
 

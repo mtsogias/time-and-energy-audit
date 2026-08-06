@@ -43,3 +43,16 @@
 - [x] Toggle-Entfernen: gefüllten Block mit gleichem Stempel nochmal antippen → dieser Raster-Slot wird aus dem Eintrag entfernt (Split). Löst "Block war zu lang, wie nehme ich Zeiten raus"
 - [x] Gespeichert-Feedback + Rückgängig: Toast-Zeile in der Stamp-Bar ("Gespeichert"/"Entfernt"/"Gelöscht" + Undo-Button, 3s sichtbar, History bis 20 Schritte)
 - [x] Getestet via Playwright: Merge 60 Min → Toggle zurück auf 30 Min → Undo entfernt letzten Eintrag — alles korrekt, Screenshots verifiziert
+
+## Fixes Runde 2 — Bedienmodell umbauen (Feedback Michael, 06.08.2026)
+Das Toggle-Löschen war unlogisch. Komplett neues Bedien-Prinzip: **"Aktiver Block"**
+- [x] Block antippen = **auswählen** (gold-Rahmen), nie löschen. Tap auf gleichen Block = deselektieren
+- [x] Leiste ändert den aktiven Block **live** (anderer Chip/$/Energie → Block ändert sich sofort, kein zweites Tap)
+- [x] Dauer über **+/−** in der Leiste (je 30 Min). + blockiert, wenn nächste Zeile belegt. 2h = Block antippen, + 3x
+- [x] Block wechseln: anderer Block antippen → alter bleibt gespeichert, neuer wird aktiv
+- [x] Vollem Block antippen → Leiste lädt seine Werte zum Bearbeiten (nichts wird gelöscht)
+- [x] **× löscht nur noch gezielt seinen eigenen Block** (klassische Erwartung, nicht aktionsabhängig)
+- [x] Raster-Toggle 15/30 raus → fest 30 Min (v2: in Settings)
+- [x] Undo/Toast komplett raus — Grundprinzip zuerst sauber hinkriegen
+- [x] Energie-Streifen (rot/grün) bleibt sichtbar am Block
+- [x] Getestet via Playwright: aktiv markieren → Chip live erstellen → $$$/Energie live → + grow → Blockwechsel → Deselektieren löscht nicht → × löscht gezielt. Alles korrekt.

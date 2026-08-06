@@ -20,48 +20,23 @@ const esc = s => { const d = document.createElement('div'); d.textContent = s; r
 //          start/dur in Minuten, start darf > 1440 sein (nach Mitternacht, gleiche Tagesseite)
 const DEFAULT_ACTS = ['Produktion', 'Mixing/Mastering', 'Content', 'Admin', 'Sales/Calls', 'Lernen', 'Sport', 'Essen', 'Pause', 'Haushalt'];
 const DEFAULT_SPAN = 18;
+const RASTER = 30; // Minuten, fest
 
 let days = load(LS.days, {});
 let entries = load(LS.entries, {});
 let acts = load(LS.acts, DEFAULT_ACTS.slice());
 let sel = load(LS.sel, { activity: acts[0] || null, value: 2, energy: 1 });
-let raster = load(LS.raster, 30);
 let viewDate = new Date();
-let view = 'log';          // 'log' | 'analyse'
-let range = 'day';         // 'day' | 'week'
-let durSel = 0;            // 0 = 1 Block, sonst Minuten
-let scrollFlag = true;     // beim naechsten Timeline-Render zum Jetzt-Block scrollen
+let view = 'log';
+let range = 'day';
+let activeStart = null; // aktuell ausgewaehlter Block-Start (Minuten) oder null
+let scrollFlag = true;  // beim naechsten Render zum Jetzt-Block scrollen
 
 const key = () => dstr(viewDate);
 const dayData = () => days[key()] || null;
 const dayEntries = () => entries[key()] || [];
-const winStart = () => Math.floor(dayData().wake / raster) * raster;
+const winStart = () => Math.floor(dayData().wake / RASTER) * RASTER;
 const winEnd = () => winStart() + (dayData().span || DEFAULT_SPAN) * 60;
-
-/* ================= Undo / Toast ================= */
-let history = [];   // [{ k, data }] — Snapshots der Tages-Eintraege
-let toastTimer = null;
-
-function pushHistory() {
-  history.push({ k: key(), data: JSON.parse(JSON.stringify(dayEntries())) });
-  if (history.length > 20) history.shift();
-}
-
-function showToast(msg) {
-  $('#toast-msg').textContent = msg;
-  $('#toast').classList.remove('hidden');
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => $('#toast').classList.add('hidden'), 3000);
-}
-
-function undo() {
-  const h = history.pop();
-  if (!h) { $('#toast').classList.add('hidden'); return; }
-  entries[h.k] = h.data;
-  save(LS.entries, entries);
-  renderLog();
-  $('#toast').classList.add('hidden');
-}
 
 /* ================= Timeline ================= */
 function renderLog() {
@@ -89,7 +64,7 @@ function renderLog() {
   let nowEl = null;
   let broke = false;
 
-  for (let t = winStart(); t < winEnd(); t += raster) {
+  for (let t = winStart(); t < winEnd(); t += RASTER) {
     if (t >= 1440 && !broke) {
       broke = true;
       const div = document.createElement('div');
@@ -110,7 +85,7 @@ function renderLog() {
 
     if (covering) {
       const isStart = covering.start === t;
-      const sameNext = list.some(e => e.id === covering.id && t + raster >= e.start && t + raster < e.start + e.dur);
+      const sameNext = list.some(e => e.id === covering.id && t + RASTER >= e.start && t + RASTER < e.start + e.dur);
       slot.classList.add('filled', covering.energy > 0 ? 'pos' : 'neg');
       slot.classList.add(isStart ? (sameNext ? 'grp-start' : 'grp-single') : (sameNext ? 'grp-mid' : 'grp-end'));
 
@@ -128,7 +103,7 @@ function renderLog() {
         del.className = 'del';
         del.textContent = '\u00D7';
         del.setAttribute('aria-label', 'Eintrag loeschen');
-        del.addEventListener('click', ev => { ev.stopPropagation(); removeEntry(covering.id); });
+        del.addEventListener('click', ev => { ev.stopPropagation(); deleteEntry(covering.id); });
         slot.appendChild(del);
       } else {
         slot.classList.add('cont');
@@ -141,12 +116,14 @@ function renderLog() {
       slot.appendChild(p);
     }
 
-    if (isToday && nowMin >= t && nowMin < t + raster) {
+    if (t === activeStart) slot.classList.add('active');
+
+    if (key() === dstr(now) && nowMin >= t && nowMin < t + RASTER) {
       slot.classList.add('now');
       nowEl = slot;
     }
 
-    slot.addEventListener('click', () => stamp(t));
+    slot.addEventListener('click', () => toggleActive(t));
     tl.appendChild(slot);
   }
 
@@ -206,69 +183,112 @@ function renderWakePrompt(tl, edit) {
   }
 }
 
-/* ================= Stempeln ================= */
-function stamp(t) {
-  if (!sel.activity) { openNewActivity(); return; }
-  const k = key();
-  const list = dayEntries();
-  const sameProps = e => e.activity === sel.activity && e.value === sel.value && e.energy === sel.energy;
-
-  // Toggle: gleicher Stempel auf gefuelltem Block -> diesen Raster-Slot aus dem Eintrag entfernen
-  const covering = list.find(e => t >= e.start && t < e.start + e.dur);
-  if (covering && sameProps(covering)) {
-    pushHistory();
-    const out = [];
-    for (const e of list) {
-      if (t >= e.start && t < e.start + e.dur) {
-        if (e.start < t) out.push({ ...e, id: uid(), dur: t - e.start });
-        if (t + raster < e.start + e.dur) out.push({ ...e, id: uid(), start: t + raster, dur: e.start + e.dur - (t + raster) });
-      } else out.push(e);
-    }
-    entries[k] = out;
-    save(LS.entries, entries);
-    showToast('Entfernt');
-    renderLog();
-    return;
-  }
-
-  const D = durSel || raster;
-  pushHistory();
-  const out = [];
-
-  // Ueberlappungen mit [t, t+D) entfernen bzw. aufteilen
-  for (const e of list) {
-    const s = e.start, en = e.start + e.dur;
-    if (en <= t || s >= t + D) { out.push(e); continue; }
-    if (s < t) out.push({ ...e, id: uid(), dur: t - s });
-    if (en > t + D) out.push({ ...e, id: uid(), start: t + D, dur: en - (t + D) });
-  }
-
-  // Mit gleichen Nachbarn verschmelzen
-  const prev = out.find(e => e.start + e.dur === t && sameProps(e));
-  const next = out.find(e => e.start === t + D && sameProps(e));
-  if (prev && next) { prev.dur += D + next.dur; out.splice(out.indexOf(next), 1); }
-  else if (prev) { prev.dur += D; }
-  else if (next) { next.start = t; next.dur += D; }
-  else out.push({ id: uid(), start: t, dur: D, activity: sel.activity, value: sel.value, energy: sel.energy });
-
-  entries[k] = out.sort((a, b) => a.start - b.start);
-  save(LS.entries, entries);
-  touchAct(sel.activity);
-
-  durSel = 0;
-  renderChips();
-  renderDur();
+/* ================= Aktiver Block (Auswahl + Live-Bearbeitung) ================= */
+function toggleActive(t) {
+  activeStart = (activeStart === t) ? null : t;
   renderLog();
-  showToast('Gespeichert');
-  if (navigator.vibrate) navigator.vibrate(8);
+  updateBarFromActive();
 }
 
-function removeEntry(id) {
-  pushHistory();
-  entries[key()] = dayEntries().filter(e => e.id !== id);
+function activeEntry() {
+  if (activeStart == null) return null;
+  return dayEntries().find(e => e.start === activeStart) || null;
+}
+
+// Leiste aus dem aktiven Block laden (oder Default, wenn leerer Block aktiv)
+function updateBarFromActive() {
+  const e = activeEntry();
+  if (e) {
+    sel.activity = e.activity; sel.value = e.value; sel.energy = e.energy;
+    save(LS.sel, sel);
+  }
+  renderChips(); renderSel(); renderDur();
+}
+
+// Leisten-Aktionen aendern den aktiven Block live
+function applyToActive() {
+  if (activeStart == null) return;
+  const k = key();
+  let list = dayEntries();
+  const existing = list.find(e => e.start === activeStart);
+
+  if (existing) {
+    // Werte ueberschreiben (Dauer bleibt)
+    existing.activity = sel.activity;
+    existing.value = sel.value;
+    existing.energy = sel.energy;
+  } else if (sel.activity) {
+    // Leer -> neu anlegen (1 Raster-Slot)
+    list = list.filter(e => !(activeStart >= e.start && activeStart < e.start + e.dur));
+    list.push({ id: uid(), start: activeStart, dur: RASTER, activity: sel.activity, value: sel.value, energy: sel.energy });
+    entries[k] = list;
+  }
+
+  // Gleiche Nachbarn verschmelzen
+  entries[k] = mergeAdjacent(list).sort((a, b) => a.start - b.start);
+  save(LS.entries, entries);
+  if (existing) touchAct(sel.activity);
+  renderLog();
+  renderChips();
+  renderDur();
+}
+
+function mergeAdjacent(list) {
+  const out = [];
+  const sorted = [...list].sort((a, b) => a.start - b.start);
+  for (const e of sorted) {
+    const prev = out[out.length - 1];
+    if (prev && prev.start + prev.dur === e.start &&
+        prev.activity === e.activity && prev.value === e.value && prev.energy === e.energy) {
+      prev.dur += e.dur;
+    } else {
+      out.push({ ...e });
+    }
+  }
+  return out;
+}
+
+function grow() {
+  if (activeStart == null) return;
+  const k = key();
+  let list = dayEntries();
+  const e = list.find(x => x.start === activeStart);
+  if (!e) return;
+  // Blockiert, wenn naechster Slot belegt ist
+  const end = e.start + e.dur;
+  if (list.some(x => x.id !== e.id && x.start >= end && x.start < end + RASTER)) return;
+  e.dur += RASTER;
+  entries[k] = list.sort((a, b) => a.start - b.start);
   save(LS.entries, entries);
   renderLog();
-  showToast('Gelöscht');
+  renderDur();
+}
+
+function shrink() {
+  if (activeStart == null) return;
+  const k = key();
+  let list = dayEntries();
+  const e = list.find(x => x.start === activeStart);
+  if (!e || e.dur <= RASTER) return;
+  e.dur -= RASTER;
+  entries[k] = list.sort((a, b) => a.start - b.start);
+  save(LS.entries, entries);
+  renderLog();
+  renderDur();
+}
+
+function deleteEntry(id) {
+  const k = key();
+  entries[k] = dayEntries().filter(x => x.id !== id);
+  save(LS.entries, entries);
+  if (activeStart != null && !dayEntries().some(e => e.start === activeStart)) activeStart = null;
+  renderLog();
+  updateBarFromActive();
+}
+
+function deleteActive() {
+  const e = activeEntry();
+  if (e) deleteEntry(e.id);
 }
 
 /* ================= Chips / Stamp-Bar ================= */
@@ -284,7 +304,7 @@ function renderChips() {
     const c = document.createElement('button');
     c.className = 'chip' + (a === sel.activity ? ' sel' : '');
     c.textContent = a;
-    c.addEventListener('click', () => { sel.activity = a; save(LS.sel, sel); renderChips(); });
+    c.addEventListener('click', () => { sel.activity = a; save(LS.sel, sel); renderChips(); applyToActive(); });
     w.appendChild(c);
   });
   const p = document.createElement('button');
@@ -317,7 +337,26 @@ function renderSel() {
 }
 
 function renderDur() {
-  document.querySelectorAll('#dur-select button').forEach(b => b.classList.toggle('active', +b.dataset.d === durSel));
+  const txt = $('#dur-text');
+  const minus = $('#dur-minus');
+  const plus = $('#dur-plus');
+  if (activeStart == null) {
+    txt.textContent = 'Block antippen';
+    minus.disabled = true; plus.disabled = true;
+    return;
+  }
+  const e = activeEntry();
+  if (!e) {
+    txt.textContent = 'Leerer Block \u2013 Chip w\u00E4hlen';
+    minus.disabled = true; plus.disabled = false;
+    return;
+  }
+  txt.textContent = `${fmtT(e.start)} \u2013 ${fmtT(e.start + e.dur)} (${fmtDur(e.dur)})`;
+  minus.disabled = e.dur <= RASTER;
+  // Plus blockiert, wenn naechster Slot belegt
+  const end = e.start + e.dur;
+  const blocked = dayEntries().some(x => x.id !== e.id && x.start >= end && x.start < end + RASTER);
+  plus.disabled = blocked;
 }
 
 /* ================= Analyse ================= */
@@ -424,7 +463,6 @@ function switchView(v) {
   $('#log-view').classList.toggle('hidden', v !== 'log');
   $('#analyse-view').classList.toggle('hidden', v !== 'analyse');
   $('#stampbar').classList.toggle('hidden', v !== 'log');
-  $('#raster-toggle').classList.toggle('hidden', v !== 'log');
   $('#range-toggle').classList.toggle('hidden', v !== 'analyse');
   if (v === 'analyse') renderAnalysis();
 }
@@ -459,16 +497,6 @@ function init() {
     refresh();
   });
 
-  document.querySelectorAll('#raster-toggle button').forEach(b => {
-    b.classList.toggle('active', +b.dataset.raster === raster);
-    b.addEventListener('click', () => {
-      raster = +b.dataset.raster;
-      save(LS.raster, raster);
-      document.querySelectorAll('#raster-toggle button').forEach(x => x.classList.toggle('active', x === b));
-      renderLog();
-    });
-  });
-
   document.querySelectorAll('#range-toggle button').forEach(b => {
     b.addEventListener('click', () => {
       range = b.dataset.range;
@@ -478,15 +506,15 @@ function init() {
   });
 
   document.querySelectorAll('#value-select button').forEach(b =>
-    b.addEventListener('click', () => { sel.value = +b.dataset.v; save(LS.sel, sel); renderSel(); }));
+    b.addEventListener('click', () => { sel.value = +b.dataset.v; save(LS.sel, sel); renderSel(); applyToActive(); }));
   document.querySelectorAll('#energy-select button').forEach(b =>
-    b.addEventListener('click', () => { sel.energy = +b.dataset.e; save(LS.sel, sel); renderSel(); }));
-  document.querySelectorAll('#dur-select button').forEach(b =>
-    b.addEventListener('click', () => { durSel = +b.dataset.d; renderDur(); }));
+    b.addEventListener('click', () => { sel.energy = +b.dataset.e; save(LS.sel, sel); renderSel(); applyToActive(); }));
+
+  $('#dur-minus').addEventListener('click', shrink);
+  $('#dur-plus').addEventListener('click', grow);
 
   $('#add-activity-btn').addEventListener('click', addActivity);
   $('#new-activity-input').addEventListener('keydown', e => { if (e.key === 'Enter') addActivity(); });
-  $('#undo-btn').addEventListener('click', undo);
 
   refresh();
 }
