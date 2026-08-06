@@ -42,6 +42,7 @@ const winEnd = () => winStart() + (dayData().span || DEFAULT_SPAN) * 60;
 /* ================= Timeline ================= */
 function renderLog() {
   const tl = $('#timeline');
+  const keepScroll = !scrollFlag ? window.scrollY : 0;
   tl.innerHTML = '';
   const d = dayData();
 
@@ -51,11 +52,13 @@ function renderLog() {
     return;
   }
 
+  $('#stampbar').classList.remove('hidden');
+
   // Aufwach-Zeile
   const wr = document.createElement('button');
   wr.className = 'wake-row';
   wr.innerHTML = `<span>Aufgewacht</span><strong>${fmtT(d.wake)}</strong><span class="wake-edit">aendern</span>`;
-  wr.addEventListener('click', () => renderWakePrompt(tl, true));
+  wr.addEventListener('click', () => renderWakeEdit(tl, wr));
   tl.appendChild(wr);
 
   const list = dayEntries();
@@ -144,7 +147,46 @@ function renderLog() {
     scrollFlag = false;
     if (nowEl) nowEl.scrollIntoView({ block: 'center' });
     else window.scrollTo({ top: 0 });
+  } else if (keepScroll) {
+    window.scrollTo({ top: keepScroll });
   }
+}
+
+/* ================= Wake Edit (Inline, Bloecke bleiben sichtbar) ================= */
+function renderWakeEdit(tl, wr) {
+  const d = dayData();
+  if (!d) return;
+
+  const edit = document.createElement('div');
+  edit.className = 'wake-row wake-edit-row';
+  edit.innerHTML =
+    `<span>Aufgewacht</span>` +
+    `<input type="time" id="wake-edit-input" value="${fmtT(d.wake)}">` +
+    `<button id="wake-edit-save" class="wake-edit-save">OK</button>` +
+    `<button id="wake-edit-cancel" class="wake-edit-cancel">x</button>`;
+  wr.replaceWith(edit);
+
+  const input = edit.querySelector('#wake-edit-input');
+  input.focus();
+
+  const finish = (commit) => {
+    if (commit) {
+      const val = input.value;
+      if (val) {
+        const [h, m] = val.split(':').map(Number);
+        d.wake = h * 60 + m;
+        save(LS.days, days);
+      }
+    }
+    renderLog();
+  };
+
+  edit.querySelector('#wake-edit-save').addEventListener('click', () => finish(true));
+  edit.querySelector('#wake-edit-cancel').addEventListener('click', () => finish(false));
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter') finish(true);
+    if (e.key === 'Escape') finish(false);
+  });
 }
 
 /* ================= Wake Prompt ================= */
