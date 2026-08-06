@@ -304,7 +304,7 @@ function renderChips() {
     const c = document.createElement('button');
     c.className = 'chip' + (a === sel.activity ? ' sel' : '');
     c.textContent = a;
-    c.addEventListener('click', () => { sel.activity = a; save(LS.sel, sel); renderChips(); applyToActive(); });
+    attachChip(c, a);
     w.appendChild(c);
   });
   const p = document.createElement('button');
@@ -312,6 +312,49 @@ function renderChips() {
   p.textContent = '+ Neu';
   p.addEventListener('click', openNewActivity);
   w.appendChild(p);
+}
+
+let suppressClick = false;
+
+function attachChip(el, name) {
+  let timer = null;
+  el.addEventListener('pointerdown', () => {
+    suppressClick = false;
+    timer = setTimeout(() => {
+      timer = null;
+      suppressClick = true;
+      if (navigator.vibrate) navigator.vibrate(15);
+      askDeleteChip(name);
+    }, 500);
+  });
+  const cancel = () => { if (timer) { clearTimeout(timer); timer = null; } };
+  el.addEventListener('pointerup', cancel);
+  el.addEventListener('pointerleave', cancel);
+  el.addEventListener('pointercancel', cancel);
+  el.addEventListener('click', () => {
+    if (suppressClick) { suppressClick = false; return; }
+    selectChip(name);
+  });
+}
+
+function selectChip(name) {
+  sel.activity = name;
+  save(LS.sel, sel);
+  renderChips();
+  applyToActive();
+}
+
+function askDeleteChip(name) {
+  if (confirm('"' + name + '" entfernen? Bestehende Eintraege behalten diese Aktivitaet.')) {
+    removeChip(name);
+  }
+}
+
+function removeChip(name) {
+  acts = acts.filter(a => a !== name);
+  save(LS.acts, acts);
+  if (sel.activity === name) { sel.activity = acts[0] || null; save(LS.sel, sel); }
+  renderChips();
 }
 
 function openNewActivity() {
