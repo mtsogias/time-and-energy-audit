@@ -27,6 +27,7 @@ let entries = load(LS.entries, {});
 let acts = load(LS.acts, DEFAULT_ACTS.slice());
 let sel = load(LS.sel, { activity: acts[0] || null, value: 2, energy: 1 });
 let viewDate = new Date();
+if (viewDate.getHours() < 5) viewDate.setDate(viewDate.getDate() - 1); // Nacht gehoert zum Vortag
 let view = 'log';
 let range = 'day';
 let activeStart = null; // aktuell ausgewaehlter Block-Start (Minuten) oder null
@@ -59,7 +60,7 @@ function renderLog() {
 
   const list = dayEntries();
   const now = new Date();
-  const isToday = key() === dstr(now);
+  const isToday = key() === dstr(todayDate());
   const nowMin = now.getHours() * 60 + now.getMinutes();
   let nowEl = null;
   let broke = false;
@@ -119,7 +120,7 @@ function renderLog() {
 
     if (t === activeStart) slot.classList.add('active');
 
-    if (key() === dstr(now) && nowMin >= t && nowMin < t + RASTER) {
+    if (isToday && nowMin >= t && nowMin < t + RASTER) {
       slot.classList.add('now');
       nowEl = slot;
     }
@@ -150,10 +151,11 @@ function renderLog() {
 function renderWakePrompt(tl, edit) {
   tl.innerHTML = '';
   const now = new Date();
-  const isToday = key() === dstr(now);
+  const isToday = key() === dstr(todayDate());
+  const morning = now.getHours() >= 5;
   const def = edit && dayData()
     ? fmtT(dayData().wake)
-    : (isToday ? `${pad(now.getHours())}:${pad(now.getMinutes())}` : '08:00');
+    : (isToday && morning ? `${pad(now.getHours())}:${pad(now.getMinutes())}` : '08:00');
 
   const card = document.createElement('div');
   card.className = 'wake-card';
@@ -521,7 +523,7 @@ function switchView(v) {
 }
 
 function renderDayLabel() {
-  $('#day-label').textContent = key() === dstr(new Date())
+  $('#day-label').textContent = key() === dstr(todayDate())
     ? 'Heute'
     : viewDate.toLocaleDateString('de-DE', { weekday: 'short', day: 'numeric', month: 'short' });
 }
@@ -536,15 +538,21 @@ function refresh() {
 }
 
 /* ================= Init ================= */
+function todayDate() {
+  const d = new Date();
+  if (d.getHours() < 5) d.setDate(d.getDate() - 1); // vor 5 Uhr gehoert die Nacht zum Vortag
+  return d;
+}
+
 function init() {
   $('#tab-log').addEventListener('click', () => switchView('log'));
   $('#tab-analyse').addEventListener('click', () => switchView('analyse'));
 
   $('#prev-day').addEventListener('click', () => { viewDate.setDate(viewDate.getDate() - 1); scrollFlag = true; refresh(); });
   $('#next-day').addEventListener('click', () => { viewDate.setDate(viewDate.getDate() + 1); scrollFlag = true; refresh(); });
-  $('#day-label').addEventListener('click', () => { viewDate = new Date(); scrollFlag = true; refresh(); });
+  $('#day-label').addEventListener('click', () => { viewDate = todayDate(); scrollFlag = true; refresh(); });
   $('#now-btn').addEventListener('click', () => {
-    viewDate = new Date();
+    viewDate = todayDate();
     scrollFlag = true;
     if (view !== 'log') switchView('log');
     refresh();
