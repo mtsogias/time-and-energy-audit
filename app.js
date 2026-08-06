@@ -64,7 +64,10 @@ function renderLog() {
   const list = dayEntries();
   const now = new Date();
   const isToday = key() === dstr(todayDate());
-  const nowMin = now.getHours() * 60 + now.getMinutes();
+  // Vor 5 Uhr gehoert die Nacht zum Vortag: aktuelle Uhrzeit um 24h versetzen,
+  // damit der Jetzt-Marker auf den Nachmittslots (Minuten > 1440) landet
+  let nowMin = now.getHours() * 60 + now.getMinutes();
+  if (now.getHours() < 5) nowMin += 1440;
   let nowEl = null;
   let broke = false;
 
