@@ -145,11 +145,10 @@ button { font: inherit; color: inherit; background: none; border: none; cursor: 
 .slot.grp-end { border-radius: 0 0 8px 8px; margin-bottom: 2px; }
 
 .slot.active {
-  outline: 2px solid var(--amber);
-  outline-offset: -2px;
   background: var(--amber-soft);
+  box-shadow: inset -3px 0 0 var(--amber);
 }
-.slot.active.empty { background: rgba(245, 165, 36, 0.05); }
+.slot.active.empty { background: rgba(245, 165, 36, 0.05); box-shadow: none; outline: 2px solid var(--amber); outline-offset: -2px; }
 
 .slot.now .time { color: var(--amber); font-weight: 600; }
 .slot.now::before {
@@ -170,6 +169,8 @@ button { font: inherit; color: inherit; background: none; border: none; cursor: 
 .slot-val { color: var(--amber); font-weight: 600; font-size: 14px; flex: none; letter-spacing: 0.02em; }
 .del { color: var(--muted-2); font-size: 16px; padding: 0 4px; flex: none; line-height: 1; opacity: 0.5; transition: opacity .15s, color .15s; }
 .del:active { opacity: 1; color: var(--red); }
+.note-btn { font-size: 14px; opacity: 0.6; padding: 2px 6px; color: var(--amber); }
+.note-btn:active { opacity: 1; }
 
 .daybreak {
   display: flex; align-items: center; gap: 10px;
@@ -248,9 +249,14 @@ button { font: inherit; color: inherit; background: none; border: none; cursor: 
 .stamp-row .seg button { flex: 1; min-width: 0; text-align: center; }
 
 #value-select button.active { background: var(--amber); color: #1a1108; font-weight: 600; }
-#energy-select button.active.e-green { background: var(--green-soft); color: var(--green); }
-#energy-select button.active.e-red { background: var(--red-soft); color: var(--red); }
-#energy-select button.active.e-neutral { background: var(--neutral-soft); color: var(--neutral); }
+#energy-select button { display: flex; align-items: center; justify-content: center; padding: 8px 0; }
+#energy-select .dot { width: 14px; height: 14px; margin: 0; }
+#energy-select button.active.e-green { background: var(--green-soft); }
+#energy-select button.active.e-green .dot { box-shadow: 0 0 0 2px var(--green); }
+#energy-select button.active.e-red { background: var(--red-soft); }
+#energy-select button.active.e-red .dot { box-shadow: 0 0 0 2px var(--red); }
+#energy-select button.active.e-neutral { background: var(--neutral-soft); }
+#energy-select button.active.e-neutral .dot { box-shadow: 0 0 0 2px var(--neutral); }
 .dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 6px; vertical-align: 1px; }
 .dot.green { background: var(--green); }
 .dot.red { background: var(--red); }
@@ -312,19 +318,22 @@ button { font: inherit; color: inherit; background: none; border: none; cursor: 
   background: var(--card); border: 1px solid var(--line); border-radius: 14px;
   padding: 20px; max-width: 340px; width: 100%;
   display: flex; flex-direction: column; gap: 14px;
+  -webkit-user-select: none; user-select: none;
+  -webkit-touch-callout: none;
 }
 #modal-title { font-size: 15px; font-weight: 600; color: var(--text); }
 #modal-body { display: flex; flex-direction: column; gap: 10px; }
 #modal-body input[type=text], #modal-body textarea {
   background: var(--bg); border: 1px solid var(--line); border-radius: 8px;
   padding: 10px 12px; color: var(--text); font: inherit; font-size: 14px;
-  width: 100%; resize: none;
+  width: 100%; resize: none; -webkit-user-select: text; user-select: text;
 }
 #modal-body input[type=text]:focus, #modal-body textarea:focus { outline: none; border-color: var(--amber); }
 #modal-body textarea { min-height: 60px; }
 #modal-actions { display: flex; gap: 8px; }
 #modal-actions button {
   flex: 1; border-radius: 8px; padding: 10px 14px; font-size: 13px; font-weight: 500;
+  -webkit-user-select: none; user-select: none; -webkit-touch-callout: none;
 }
 .btn-primary { background: var(--amber); color: #1a1108; font-weight: 600; }
 .btn-secondary { background: var(--card-2); color: var(--text); border: 1px solid var(--line); }
