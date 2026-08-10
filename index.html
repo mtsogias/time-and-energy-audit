@@ -54,6 +54,7 @@
       </div>
       <div id="energy-select" class="seg">
         <button data-e="1" class="e-green active"><span class="dot green"></span>Gibt</button>
+        <button data-e="0" class="e-neutral"><span class="dot neutral"></span>Neutral</button>
         <button data-e="-1" class="e-red"><span class="dot red"></span>Zieht</button>
       </div>
     </div>
@@ -61,6 +62,15 @@
       <button id="dur-minus" class="dur-btn" aria-label="Kuerzer">&minus;</button>
       <span id="dur-text" class="dur-text">Block antippen</span>
       <button id="dur-plus" class="dur-btn" aria-label="Laenger">+</button>
+    </div>
+  </div>
+
+  <!-- Modal fuer Chip-Verwaltung (Umbenennen / Loeschen) und Notiz -->
+  <div id="modal-overlay" class="hidden">
+    <div id="modal-card">
+      <div id="modal-title"></div>
+      <div id="modal-body"></div>
+      <div id="modal-actions"></div>
     </div>
   </div>
 

@@ -16,7 +16,7 @@ const esc = s => { const d = document.createElement('div'); d.textContent = s; r
 
 /* ================= State ================= */
 // days:    { 'YYYY-MM-DD': { wake: Minuten seit 0:00, span: Stunden } }
-// entries: { 'YYYY-MM-DD': [{ id, start, dur, activity, value (1-3), energy (1|-1) }] }
+// entries: { 'YYYY-MM-DD': [{ id, start, dur, activity, value (0-3), energy (-1|0|1), note }] }
 //          start/dur in Minuten, start darf > 1440 sein (nach Mitternacht, gleiche Tagesseite)
 const DEFAULT_ACTS = ['Produktion', 'Mixing/Mastering', 'Content', 'Admin', 'Sales/Calls', 'Lernen', 'Sport', 'Essen', 'Pause', 'Haushalt'];
 const DEFAULT_SPAN = 18;
@@ -93,20 +93,27 @@ function renderLog() {
     if (covering) {
       const isStart = covering.start === t;
       const sameNext = list.some(e => e.id === covering.id && t + RASTER >= e.start && t + RASTER < e.start + e.dur);
-      slot.classList.add('filled', covering.energy > 0 ? 'pos' : 'neg');
+      slot.classList.add('filled', covering.energy > 0 ? 'pos' : (covering.energy < 0 ? 'neg' : 'neutral'));
       slot.classList.add(isStart ? (sameNext ? 'grp-start' : 'grp-single') : (sameNext ? 'grp-mid' : 'grp-end'));
 
       if (isStart) {
         const c = document.createElement('div');
         c.className = 'slot-content';
         const archived = !acts.includes(covering.activity);
+        const noteHTML = covering.note ? `<span class="slot-note">${esc(covering.note)}</span>` : '';
         c.innerHTML =
           `<div class="slot-main">` +
             `<span class="slot-act${archived ? ' archived' : ''}">${esc(covering.activity)}</span>` +
-            `<span class="slot-sub">${fmtT(covering.start)} \u2013 ${fmtT(covering.start + covering.dur)}</span>` +
+            (noteHTML || `<span class="slot-sub">${fmtT(covering.start)} \u2013 ${fmtT(covering.start + covering.dur)}</span>`) +
           `</div>` +
           `<span class="slot-val">${covering.value ? '$'.repeat(covering.value) : '\u2013'}</span>`;
         slot.appendChild(c);
+        const noteBtn = document.createElement('button');
+        noteBtn.className = 'del note-btn';
+        noteBtn.innerHTML = covering.note ? '\u270E' : '+';
+        noteBtn.setAttribute('aria-label', 'Notiz');
+        noteBtn.addEventListener('click', ev => { ev.stopPropagation(); editNote(covering.id); });
+        slot.appendChild(noteBtn);
         const del = document.createElement('button');
         del.className = 'del';
         del.textContent = '\u00D7';
@@ -233,6 +240,22 @@ function renderWakePrompt(tl, edit) {
 
 /* ================= Aktiver Block (Auswahl + Live-Bearbeitung) ================= */
 function toggleActive(t) {
+  const list = dayEntries();
+  // Slot innerhalb eines bestehenden Eintrags -> Eintrag-Start aktivieren
+  const covering = list.find(e => t >= e.start && t < e.start + e.dur);
+  if (covering) {
+    activeStart = (activeStart === covering.start) ? null : covering.start;
+    renderLog(); updateBarFromActive();
+    return;
+  }
+  // Leerer Slot, der direkt an einen bestehenden Eintrag grenzt -> diesen aktivieren
+  // (damit man von der anliegenden Box aus mit + verlaengern kann)
+  const adjacent = list.find(e => e.start + e.dur === t);
+  if (adjacent) {
+    activeStart = adjacent.start;
+    renderLog(); updateBarFromActive();
+    return;
+  }
   activeStart = (activeStart === t) ? null : t;
   renderLog();
   updateBarFromActive();
@@ -339,6 +362,55 @@ function deleteActive() {
   if (e) deleteEntry(e.id);
 }
 
+function editNote(id) {
+  const e = dayEntries().find(x => x.id === id);
+  if (!e) return;
+  showModal('Notiz',
+    `<textarea id="note-input" placeholder="Notiz zu dieser Aktivitaet...">${esc(e.note || '')}</textarea>`,
+    [
+      { label: 'Speichern', class: 'btn-primary', onClick: (body) => {
+        e.note = body.querySelector('#note-input').value.trim();
+        save(LS.entries, entries);
+        renderLog();
+      }},
+      { label: 'Loeschen', class: 'btn-danger', onClick: () => {
+        e.note = '';
+        save(LS.entries, entries);
+        renderLog();
+      }, close: false },
+      { label: 'Abbrechen', class: 'btn-secondary' },
+    ]
+  );
+  setTimeout(() => $('#note-input').focus(), 50);
+}
+
+/* ================= Modal ================= */
+function showModal(title, bodyHTML, actions) {
+  const overlay = $('#modal-overlay');
+  $('#modal-title').textContent = title;
+  $('#modal-body').innerHTML = bodyHTML;
+  const acts = $('#modal-actions');
+  acts.innerHTML = '';
+  actions.forEach(a => {
+    const b = document.createElement('button');
+    b.textContent = a.label;
+    b.className = a.class || 'btn-secondary';
+    b.addEventListener('click', () => {
+      if (a.onClick) a.onClick($('#modal-body'));
+      if (a.close !== false) closeModal();
+    });
+    acts.appendChild(b);
+  });
+  overlay.classList.remove('hidden');
+}
+
+function closeModal() {
+  $('#modal-overlay').classList.add('hidden');
+  $('#modal-title').textContent = '';
+  $('#modal-body').innerHTML = '';
+  $('#modal-actions').innerHTML = '';
+}
+
 /* ================= Chips / Stamp-Bar ================= */
 function touchAct(name) {
   acts = [name, ...acts.filter(a => a !== name)].slice(0, 12);
@@ -393,9 +465,40 @@ function selectChip(name) {
 }
 
 function askDeleteChip(name) {
-  if (confirm('"' + name + '" aus der Schnellauswahl entfernen?\n\nVorhandene Eintraege bleiben erhalten und werden kursiv angezeigt. Neu hinzufuegen jederzeit ueber "+ Neu" mit gleichem Namen.')) {
-    removeChip(name);
+  showModal(name,
+    `<input type="text" id="chip-rename" value="${esc(name)}" maxlength="30">
+     <div class="modal-hint">Bestehende Eintraege mit dieser Aktivitaet werden automatisch umbenannt.</div>`,
+    [
+      { label: 'Umbenennen', class: 'btn-primary', onClick: (body) => {
+        const newName = body.querySelector('#chip-rename').value.trim();
+        if (newName && newName !== name) renameChip(name, newName);
+      }},
+      { label: 'Loeschen', class: 'btn-danger', onClick: () => {
+        if (confirm('"' + name + '" wirklich loeschen?\nVorhandene Eintraege behalten diese Aktivitaet (kursiv).'))
+          removeChip(name);
+      }},
+      { label: 'Abbrechen', class: 'btn-secondary' },
+    ]
+  );
+}
+
+function renameChip(oldName, newName) {
+  const i = acts.indexOf(oldName);
+  if (i < 0) return;
+  acts[i] = newName;
+  save(LS.acts, acts);
+  if (sel.activity === oldName) { sel.activity = newName; save(LS.sel, sel); }
+  // Alle Eintraege systemweit umbenennen
+  for (const k in entries) {
+    let changed = false;
+    for (const e of entries[k]) {
+      if (e.activity === oldName) { e.activity = newName; changed = true; }
+    }
+    if (changed) save(LS.entries, entries);
   }
+  renderChips();
+  renderLog();
+  if (view === 'analyse') renderAnalysis();
 }
 
 function removeChip(name) {
@@ -494,14 +597,15 @@ function renderAnalysis() {
   const rated = total - neutral;
   const needle = list.filter(e => e.value === 3).reduce((s, e) => s + e.dur, 0);
   const green = list.filter(e => e.energy > 0).reduce((s, e) => s + e.dur, 0);
-  const red = total - green;
+  const red = list.filter(e => e.energy < 0).reduce((s, e) => s + e.dur, 0);
+  const neutralEn = list.filter(e => e.energy === 0).reduce((s, e) => s + e.dur, 0);
   const byVal = { 1: 0, 2: 0, 3: 0 };
   list.forEach(e => { if (e.value > 0) byVal[e.value] += e.dur; });
   const byAct = {};
   list.forEach(e => {
-    const a = byAct[e.activity] || (byAct[e.activity] = { min: 0, g: 0, r: 0 });
+    const a = byAct[e.activity] || (byAct[e.activity] = { min: 0, g: 0, r: 0, n: 0 });
     a.min += e.dur;
-    if (e.energy > 0) a.g += e.dur; else a.r += e.dur;
+    if (e.energy > 0) a.g += e.dur; else if (e.energy < 0) a.r += e.dur; else a.n += e.dur;
   });
 
   // Needle Mover (nur bewertete Zeit)
@@ -515,10 +619,11 @@ function renderAnalysis() {
   const sorted = Object.entries(byAct).sort((a, b) => b[1].min - a[1].min);
   const max = sorted[0][1].min;
   box.appendChild(card('Zeit pro Aktivitaet',
-    sorted.map(([n, a]) =>
-      barRow(acts.includes(n) ? esc(n) : `<i>${esc(n)}</i>`, Math.round(a.min / max * 100), a.g >= a.r ? 'var(--green)' : 'var(--red)', fmtDur(a.min))
-    ).join('') +
-    `<div class="hint">Farbe = Energie-Bilanz der Aktivitaet</div>`));
+    sorted.map(([n, a]) => {
+      const color = a.g >= a.r && a.g >= a.n ? 'var(--green)' : a.r >= a.g && a.r >= a.n ? 'var(--red)' : 'var(--neutral)';
+      return barRow(acts.includes(n) ? esc(n) : `<i>${esc(n)}</i>`, Math.round(a.min / max * 100), color, fmtDur(a.min));
+    }).join('') +
+    `<div class="hint">Farbe = Energie-Bilanz (Gruen/Rot/Grau)</div>`));
 
   // $-Verteilung (Anteil an bewerteter Zeit)
   box.appendChild(card('$-Verteilung',
@@ -535,7 +640,8 @@ function renderAnalysis() {
   // Energie-Bilanz
   box.appendChild(card('Energie-Bilanz',
     barRow('Gibt', Math.round(green / total * 100), 'var(--green)', fmtDur(green)) +
-    barRow('Zieht', Math.round(red / total * 100), 'var(--red)', fmtDur(red))));
+    barRow('Zieht', Math.round(red / total * 100), 'var(--red)', fmtDur(red)) +
+    (neutralEn > 0 ? barRow('Neutral', Math.round(neutralEn / total * 100), 'var(--neutral)', fmtDur(neutralEn)) : '')));
 
   // Ø Aufwachzeit (nur Woche)
   if (range === 'week') {
@@ -621,6 +727,8 @@ function init() {
 
   $('#add-activity-btn').addEventListener('click', addActivity);
   $('#new-activity-input').addEventListener('keydown', e => { if (e.key === 'Enter') addActivity(); });
+
+  $('#modal-overlay').addEventListener('click', (e) => { if (e.target === $('#modal-overlay')) closeModal(); });
 
   refresh();
 }
