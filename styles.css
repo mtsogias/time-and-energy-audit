@@ -21,7 +21,7 @@
   --radius: 10px;
 }
 
-* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; }
 html, body { margin: 0; padding: 0; }
 body {
   background: var(--bg);

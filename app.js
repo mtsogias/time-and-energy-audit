@@ -438,7 +438,8 @@ let suppressClick = false;
 
 function attachChip(el, name) {
   let timer = null;
-  el.addEventListener('pointerdown', () => {
+  el.addEventListener('pointerdown', (e) => {
+    e.preventDefault();
     suppressClick = false;
     timer = setTimeout(() => {
       timer = null;
