@@ -438,6 +438,7 @@ let suppressClick = false;
 
 function attachChip(el, name) {
   let timer = null;
+  el.addEventListener('touchstart', (e) => { e.preventDefault(); }, { passive: false });
   el.addEventListener('pointerdown', (e) => {
     e.preventDefault();
     suppressClick = false;

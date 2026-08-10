@@ -29,6 +29,7 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, sans-serif;
   touch-action: manipulation;
   user-select: none;
+  -webkit-user-select: none;
   -webkit-font-smoothing: antialiased;
 }
 input { user-select: text; }
