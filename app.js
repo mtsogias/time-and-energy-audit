@@ -1,7 +1,75 @@
 'use strict';
 
 /* ================= Storage ================= */
-const LS = { days: 'tea_days', entries: 'tea_entries', acts: 'tea_acts', sel: 'tea_sel', raster: 'tea_raster' };
+const LS = { days: 'tea_days', entries: 'tea_entries', acts: 'tea_acts', sel: 'tea_sel', raster: 'tea_raster', lang: 'tea_lang' };
+
+/* ================= i18n ================= */
+const LOCALES = { de: 'de-DE', en: 'en-US', fr: 'fr-FR' };
+let lang = load(LS.lang, 'de');
+const I18N = {
+  de: {
+    log: 'Log', analyse: 'Analyse', day: 'Tag', week: '7 Tage', today: 'Heute', now: 'Jetzt',
+    woke: 'Aufgewacht', change: 'aendern', midnight: 'Mitternacht', extend: '+ 2 Stunden',
+    wakeQ: 'Wann bist du aufgewacht?', startDay: 'Tag starten', save: 'Speichern', cancel: 'Abbrechen',
+    wakeHint: 'Dein Tag baut sich ab hier auf.', note: 'Notiz', delEntry: 'Eintrag loeschen',
+    shorter: 'Kuerzer', longer: 'Laenger', tapBlock: 'Block antippen',
+    emptyBlock: 'Leerer Block \u2013 Chip w\u00E4hlen', newCat: '+ Neu', newAct: 'Neue Aktivitaet...',
+    ok: 'OK', rename: 'Umbenennen', delete: 'Loeschen', notePh: 'Notiz zu dieser Aktivitaet...',
+    renameHint: 'Bestehende Eintraege mit dieser Aktivitaet werden automatisch umbenannt.',
+    confirmDelChip: '"{name}" wirklich loeschen?\nVorhandene Eintraege behalten diese Aktivitaet (kursiv).',
+    noEntries: 'Noch keine Eintraege in diesem Zeitraum.', needleMover: 'Needle Mover',
+    needleTime: '$$$-Zeit: {needle} von {rated} bewerteter Zeit', unrated: 'unbewertet',
+    timePerAct: 'Zeit pro Aktivitaet', energyColor: 'Farbe = Energie-Bilanz (Gruen/Rot/Grau)',
+    valDist: '$-Verteilung',
+    valLegend: '$ = Busywork \u00B7 $$ = wichtig \u00B7 $$$ = bewegt die Nadel \u00B7 \u2013 = unbewertet',
+    energyBal: 'Energie-Bilanz', gives: 'Gibt', drains: 'Zieht', neutralLbl: 'Neutral',
+    wakeTime: 'Aufwachzeit', avgLast: '\u00D8 der letzten {n} Tage',
+    settings: 'Einstellungen', language: 'Sprache',
+  },
+  en: {
+    log: 'Log', analyse: 'Analysis', day: 'Day', week: '7 Days', today: 'Today', now: 'Now',
+    woke: 'Woke up', change: 'edit', midnight: 'Midnight', extend: '+ 2 hours',
+    wakeQ: 'When did you wake up?', startDay: 'Start day', save: 'Save', cancel: 'Cancel',
+    wakeHint: 'Your day builds from here.', note: 'Note', delEntry: 'Delete entry',
+    shorter: 'Shorter', longer: 'Longer', tapBlock: 'Tap a block',
+    emptyBlock: 'Empty block \u2013 pick a chip', newCat: '+ New', newAct: 'New activity...',
+    ok: 'OK', rename: 'Rename', delete: 'Delete', notePh: 'Note for this activity...',
+    renameHint: 'Existing entries with this activity will be renamed automatically.',
+    confirmDelChip: 'Delete "{name}"?\nExisting entries keep this activity (italic).',
+    noEntries: 'No entries in this period yet.', needleMover: 'Needle Mover',
+    needleTime: '$$$ time: {needle} of {rated} rated time', unrated: 'unrated',
+    timePerAct: 'Time per activity', energyColor: 'Color = energy balance (green/red/grey)',
+    valDist: '$ Distribution',
+    valLegend: '$ = busywork \u00B7 $$ = important \u00B7 $$$ = moves the needle \u00B7 \u2013 = unrated',
+    energyBal: 'Energy Balance', gives: 'Gives', drains: 'Drains', neutralLbl: 'Neutral',
+    wakeTime: 'Wake time', avgLast: 'Avg of last {n} days',
+    settings: 'Settings', language: 'Language',
+  },
+  fr: {
+    log: 'Journal', analyse: 'Analyse', day: 'Jour', week: '7 Jours', today: 'Aujourd\'hui', now: 'Maintenant',
+    woke: 'Reveil', change: 'modifier', midnight: 'Minuit', extend: '+ 2 heures',
+    wakeQ: 'Quand t\'es-tu reveille ?', startDay: 'Demarrer', save: 'Enregistrer', cancel: 'Annuler',
+    wakeHint: 'Ta journee se construit ici.', note: 'Note', delEntry: 'Supprimer',
+    shorter: 'Plus court', longer: 'Plus long', tapBlock: 'Toucher un bloc',
+    emptyBlock: 'Bloc vide \u2013 choisir un chip', newCat: '+ Nouveau', newAct: 'Nouvelle activite...',
+    ok: 'OK', rename: 'Renommer', delete: 'Supprimer', notePh: 'Note pour cette activite...',
+    renameHint: 'Les entrees existantes seront renommees automatiquement.',
+    confirmDelChip: 'Supprimer "{name}" ?\nLes entrees existantes gardent cette activite (italique).',
+    noEntries: 'Aucune entree sur cette periode.', needleMover: 'Needle Mover',
+    needleTime: 'Temps $$$ : {needle} sur {rated} evalue', unrated: 'non evalue',
+    timePerAct: 'Temps par activite', energyColor: 'Couleur = bilan d\'energie (vert/rouge/gris)',
+    valDist: 'Distribution $',
+    valLegend: '$ = peu utile \u00B7 $$ = important \u00B7 $$$ = fait avancer \u00B7 \u2013 = non evalue',
+    energyBal: 'Bilan d\'energie', gives: 'Donne', drains: 'Pompe', neutralLbl: 'Neutre',
+    wakeTime: 'Heure de reveil', avgLast: 'Moy. des {n} derniers jours',
+    settings: 'Reglages', language: 'Langue',
+  },
+};
+const t = (k, vars) => {
+  let s = (I18N[lang] && I18N[lang][k]) || (I18N.de[k]) || k;
+  if (vars) for (const v in vars) s = s.replace(`{${v}}`, vars[v]);
+  return s;
+};
 const load = (k, fb) => { try { const v = JSON.parse(localStorage.getItem(k)); return v == null ? fb : v; } catch { return fb; } };
 const save = (k, v) => localStorage.setItem(k, JSON.stringify(v));
 
@@ -57,7 +125,7 @@ function renderLog() {
   // Aufwach-Zeile
   const wr = document.createElement('button');
   wr.className = 'wake-row';
-  wr.innerHTML = `<span>Aufgewacht</span><strong>${fmtT(d.wake)}</strong><span class="wake-edit">aendern</span>`;
+  wr.innerHTML = `<span>${t('woke')}</span><strong>${fmtT(d.wake)}</strong><span class="wake-edit">${t('change')}</span>`;
   wr.addEventListener('click', () => renderWakeEdit(tl, wr));
   tl.appendChild(wr);
 
@@ -76,7 +144,7 @@ function renderLog() {
       broke = true;
       const div = document.createElement('div');
       div.className = 'daybreak';
-      div.textContent = 'Mitternacht';
+      div.textContent = t('midnight');
       tl.appendChild(div);
     }
 
@@ -111,13 +179,13 @@ function renderLog() {
         const noteBtn = document.createElement('button');
         noteBtn.className = 'del note-btn';
         noteBtn.innerHTML = covering.note ? '\u270E' : '+';
-        noteBtn.setAttribute('aria-label', 'Notiz');
+        noteBtn.setAttribute('aria-label', t('note'));
         noteBtn.addEventListener('click', ev => { ev.stopPropagation(); editNote(covering.id); });
         slot.appendChild(noteBtn);
         const del = document.createElement('button');
         del.className = 'del';
         del.textContent = '\u00D7';
-        del.setAttribute('aria-label', 'Eintrag loeschen');
+        del.setAttribute('aria-label', t('delEntry'));
         del.addEventListener('click', ev => { ev.stopPropagation(); deleteEntry(covering.id); });
         slot.appendChild(del);
       } else {
@@ -145,7 +213,7 @@ function renderLog() {
   // Tag verlaengern
   const ext = document.createElement('button');
   ext.className = 'extend';
-  ext.textContent = '+ 2 Stunden';
+  ext.textContent = t('extend');
   ext.addEventListener('click', () => {
     d.span = (d.span || DEFAULT_SPAN) + 2;
     save(LS.days, days);
@@ -170,9 +238,9 @@ function renderWakeEdit(tl, wr) {
   const edit = document.createElement('div');
   edit.className = 'wake-row wake-edit-row';
   edit.innerHTML =
-    `<span>Aufgewacht</span>` +
+    `<span>${t('woke')}</span>` +
     `<input type="time" id="wake-edit-input" value="${fmtT(d.wake)}">` +
-    `<button id="wake-edit-save" class="wake-edit-save">OK</button>` +
+    `<button id="wake-edit-save" class="wake-edit-save">${t('ok')}</button>` +
     `<button id="wake-edit-cancel" class="wake-edit-cancel">x</button>`;
   wr.replaceWith(edit);
 
@@ -212,14 +280,14 @@ function renderWakePrompt(tl, edit) {
   const card = document.createElement('div');
   card.className = 'wake-card';
   card.innerHTML =
-    `<h2>Wann bist du aufgewacht?</h2>` +
+    `<h2>${t('wakeQ')}</h2>` +
     `<div class="wake-input-row">` +
       `<input type="time" id="wake-input" value="${def}">` +
-      `<button id="wake-save">${edit ? 'Speichern' : 'Tag starten'}</button>` +
+      `<button id="wake-save">${edit ? t('save') : t('startDay')}</button>` +
     `</div>` +
     (edit
-      ? `<button class="wake-cancel">Abbrechen</button>`
-      : `<p class="wake-hint">Dein Tag baut sich ab hier auf.</p>`);
+      ? `<button class="wake-cancel">${t('cancel')}</button>`
+      : `<p class="wake-hint">${t('wakeHint')}</p>`);
   tl.appendChild(card);
 
   $('#wake-save').addEventListener('click', () => {
@@ -365,20 +433,20 @@ function deleteActive() {
 function editNote(id) {
   const e = dayEntries().find(x => x.id === id);
   if (!e) return;
-  showModal('Notiz',
-    `<textarea id="note-input" placeholder="Notiz zu dieser Aktivitaet...">${esc(e.note || '')}</textarea>`,
+  showModal(t('note'),
+    `<textarea id="note-input" placeholder="${t('notePh')}">${esc(e.note || '')}</textarea>`,
     [
-      { label: 'Speichern', class: 'btn-primary', onClick: (body) => {
+      { label: t('save'), class: 'btn-primary', onClick: (body) => {
         e.note = body.querySelector('#note-input').value.trim();
         save(LS.entries, entries);
         renderLog();
       }},
-      { label: 'Loeschen', class: 'btn-danger', onClick: () => {
+      { label: t('delete'), class: 'btn-danger', onClick: () => {
         e.note = '';
         save(LS.entries, entries);
         renderLog();
       }, close: false },
-      { label: 'Abbrechen', class: 'btn-secondary' },
+      { label: t('cancel'), class: 'btn-secondary' },
     ]
   );
   setTimeout(() => $('#note-input').focus(), 50);
@@ -429,7 +497,7 @@ function renderChips() {
   });
   const p = document.createElement('button');
   p.className = 'chip plus';
-  p.textContent = '+ Neu';
+  p.textContent = t('newCat');
   p.addEventListener('click', openNewActivity);
   w.appendChild(p);
 }
@@ -472,17 +540,16 @@ function selectChip(name) {
 function askDeleteChip(name) {
   showModal(name,
     `<input type="text" id="chip-rename" value="${esc(name)}" maxlength="30">
-     <div class="modal-hint">Bestehende Eintraege mit dieser Aktivitaet werden automatisch umbenannt.</div>`,
+     <div class="modal-hint">${t('renameHint')}</div>`,
     [
-      { label: 'Umbenennen', class: 'btn-primary', onClick: (body) => {
+      { label: t('rename'), class: 'btn-primary', onClick: (body) => {
         const newName = body.querySelector('#chip-rename').value.trim();
         if (newName && newName !== name) renameChip(name, newName);
       }},
-      { label: 'Loeschen', class: 'btn-danger', onClick: () => {
-        if (confirm('"' + name + '" wirklich loeschen?\nVorhandene Eintraege behalten diese Aktivitaet (kursiv).'))
-          removeChip(name);
+      { label: t('delete'), class: 'btn-danger', onClick: () => {
+        if (confirm(t('confirmDelChip', { name }))) removeChip(name);
       }},
-      { label: 'Abbrechen', class: 'btn-secondary' },
+      { label: t('cancel'), class: 'btn-secondary' },
     ]
   );
 }
@@ -542,13 +609,13 @@ function renderDur() {
   const minus = $('#dur-minus');
   const plus = $('#dur-plus');
   if (activeStart == null) {
-    txt.textContent = 'Block antippen';
+    txt.textContent = t('tapBlock');
     minus.disabled = true; plus.disabled = true;
     return;
   }
   const e = activeEntry();
   if (!e) {
-    txt.textContent = 'Leerer Block \u2013 Chip w\u00E4hlen';
+    txt.textContent = t('emptyBlock');
     minus.disabled = true; plus.disabled = false;
     return;
   }
@@ -593,7 +660,7 @@ function renderAnalysis() {
   const list = collect();
 
   if (!list.length) {
-    box.innerHTML = '<div class="card"><p class="hint">Noch keine Eintraege in diesem Zeitraum.</p></div>';
+    box.innerHTML = `<div class="card"><p class="hint">${t('noEntries')}</p></div>`;
     return;
   }
 
@@ -615,23 +682,23 @@ function renderAnalysis() {
 
   // Needle Mover (nur bewertete Zeit)
   const needlePct = rated > 0 ? Math.round(needle / rated * 100) : 0;
-  box.appendChild(card('Needle Mover',
+  box.appendChild(card(t('needleMover'),
     `<div class="needle-num">${needlePct}%</div>` +
-    `<div class="hint">$$$-Zeit: ${fmtDur(needle)} von ${fmtDur(rated)} bewerteter Zeit` +
-    (neutral > 0 ? ` \u00B7 ${fmtDur(neutral)} unbewertet` : '') + `</div>`));
+    `<div class="hint">${t('needleTime', { needle: fmtDur(needle), rated: fmtDur(rated) })}` +
+    (neutral > 0 ? ` \u00B7 ${fmtDur(neutral)} ${t('unrated')}` : '') + `</div>`));
 
   // Zeit pro Aktivitaet (Balken relativ zum Maximum, Farbe = Energie-Bilanz)
   const sorted = Object.entries(byAct).sort((a, b) => b[1].min - a[1].min);
   const max = sorted[0][1].min;
-  box.appendChild(card('Zeit pro Aktivitaet',
+  box.appendChild(card(t('timePerAct'),
     sorted.map(([n, a]) => {
       const color = a.g >= a.r && a.g >= a.n ? 'var(--green)' : a.r >= a.g && a.r >= a.n ? 'var(--red)' : 'var(--neutral)';
       return barRow(acts.includes(n) ? esc(n) : `<i>${esc(n)}</i>`, Math.round(a.min / max * 100), color, fmtDur(a.min));
     }).join('') +
-    `<div class="hint">Farbe = Energie-Bilanz (Gruen/Rot/Grau)</div>`));
+    `<div class="hint">${t('energyColor')}</div>`));
 
   // $-Verteilung (Anteil an bewerteter Zeit)
-  box.appendChild(card('$-Verteilung',
+  box.appendChild(card(t('valDist'),
     [3, 2, 1].map(v =>
       barRow(`<span style="color:var(--amber);font-weight:700">${'$'.repeat(v)}</span>`,
         rated > 0 ? Math.round(byVal[v] / rated * 100) : 0, 'var(--amber)',
@@ -640,13 +707,13 @@ function renderAnalysis() {
     (neutral > 0 ? barRow('<span style="color:var(--muted)">\u2013</span>',
       Math.round(neutral / total * 100), 'var(--muted-2)',
       `${fmtDur(neutral)} \u00B7 ${Math.round(neutral / total * 100)}%`) : '') +
-    `<div class="hint">$ = Busywork \u00B7 $$ = wichtig \u00B7 $$$ = bewegt die Nadel \u00B7 \u2013 = unbewertet</div>`));
+    `<div class="hint">${t('valLegend')}</div>`));
 
   // Energie-Bilanz
-  box.appendChild(card('Energie-Bilanz',
-    barRow('Gibt', Math.round(green / total * 100), 'var(--green)', fmtDur(green)) +
-    barRow('Zieht', Math.round(red / total * 100), 'var(--red)', fmtDur(red)) +
-    (neutralEn > 0 ? barRow('Neutral', Math.round(neutralEn / total * 100), 'var(--neutral)', fmtDur(neutralEn)) : '')));
+  box.appendChild(card(t('energyBal'),
+    barRow(t('gives'), Math.round(green / total * 100), 'var(--green)', fmtDur(green)) +
+    barRow(t('drains'), Math.round(red / total * 100), 'var(--red)', fmtDur(red)) +
+    (neutralEn > 0 ? barRow(t('neutralLbl'), Math.round(neutralEn / total * 100), 'var(--neutral)', fmtDur(neutralEn)) : '')));
 
   // Ø Aufwachzeit (nur Woche)
   if (range === 'week') {
@@ -659,9 +726,9 @@ function renderAnalysis() {
     }
     if (wakes.length) {
       const avg = Math.round(wakes.reduce((s, w) => s + w, 0) / wakes.length);
-      box.appendChild(card('Aufwachzeit',
+      box.appendChild(card(t('wakeTime'),
         `<div class="needle-num small">${fmtT(avg)}</div>` +
-        `<div class="hint">\u00D8 der letzten ${wakes.length} Tage</div>`));
+        `<div class="hint">${t('avgLast', { n: wakes.length })}</div>`));
     }
   }
 }
@@ -680,8 +747,8 @@ function switchView(v) {
 
 function renderDayLabel() {
   $('#day-label').textContent = key() === dstr(todayDate())
-    ? 'Heute'
-    : viewDate.toLocaleDateString('de-DE', { weekday: 'short', day: 'numeric', month: 'short' });
+    ? t('today')
+    : viewDate.toLocaleDateString(LOCALES[lang] || 'de-DE', { weekday: 'short', day: 'numeric', month: 'short' });
 }
 
 function refresh() {
@@ -700,9 +767,42 @@ function todayDate() {
   return d;
 }
 
+function renderLang() {
+  $('#tab-log').textContent = t('log');
+  $('#tab-analyse').textContent = t('analyse');
+  document.querySelectorAll('#range-toggle button').forEach(b => {
+    b.textContent = b.dataset.range === 'day' ? t('day') : t('week');
+  });
+  $('#now-btn').lastChild.textContent = t('now');
+  $('#new-activity-input').placeholder = t('newAct');
+  $('#add-activity-btn').textContent = t('ok');
+  $('#dur-minus').setAttribute('aria-label', t('shorter'));
+  $('#dur-plus').setAttribute('aria-label', t('longer'));
+  $('#settings-btn').setAttribute('aria-label', t('settings'));
+}
+
+function openSettings() {
+  const seg = Object.keys(I18N).map(l =>
+    `<button data-lang="${l}" class="${l === lang ? 'active' : ''}">${l.toUpperCase()}</button>`).join('');
+  showModal(t('settings'),
+    `<div class="settings-row"><span>${t('language')}</span><div class="seg lang-seg">${seg}</div></div>`,
+    [{ label: t('ok'), class: 'btn-primary' }]
+  );
+  document.querySelectorAll('.lang-seg button').forEach(b =>
+    b.addEventListener('click', () => {
+      lang = b.dataset.lang;
+      save(LS.lang, lang);
+      document.querySelectorAll('.lang-seg button').forEach(x => x.classList.toggle('active', x === b));
+      renderLang();
+      refresh();
+    }));
+}
+
 function init() {
+  renderLang();
   $('#tab-log').addEventListener('click', () => switchView('log'));
   $('#tab-analyse').addEventListener('click', () => switchView('analyse'));
+  $('#settings-btn').addEventListener('click', openSettings);
 
   $('#prev-day').addEventListener('click', () => { viewDate.setDate(viewDate.getDate() - 1); scrollFlag = true; refresh(); });
   $('#next-day').addEventListener('click', () => { viewDate.setDate(viewDate.getDate() + 1); scrollFlag = true; refresh(); });

@@ -57,6 +57,12 @@ button { font: inherit; color: inherit; background: none; border: none; cursor: 
 }
 .tab.active { background: var(--card-2); color: var(--text); }
 
+.settings-btn {
+  font-size: 18px; padding: 4px 10px; color: var(--muted); line-height: 1;
+  border-radius: 6px; transition: background .15s;
+}
+.settings-btn:active { background: var(--card); color: var(--text); }
+
 .daynav { display: flex; align-items: center; gap: 4px; }
 .navbtn {
   font-size: 18px; padding: 4px 10px; color: var(--muted); line-height: 1;
@@ -340,3 +346,6 @@ button { font: inherit; color: inherit; background: none; border: none; cursor: 
 .btn-secondary { background: var(--card-2); color: var(--text); border: 1px solid var(--line); }
 .btn-danger { background: transparent; color: var(--red); border: 1px solid rgba(248, 113, 113, 0.3); }
 .modal-hint { font-size: 12px; color: var(--muted-2); }
+.settings-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.settings-row > span { font-size: 14px; color: var(--text); }
+.lang-seg button { padding: 6px 14px; font-weight: 600; }
