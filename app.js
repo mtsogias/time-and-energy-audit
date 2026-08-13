@@ -777,7 +777,7 @@ function renderLang() {
   document.querySelectorAll('#range-toggle button').forEach(b => {
     b.textContent = b.dataset.range === 'day' ? t('day') : t('week');
   });
-  $('#now-btn').lastChild.textContent = t('now');
+  $('#now-text').textContent = t('now');
   $('#new-activity-input').placeholder = t('newAct');
   $('#add-activity-btn').textContent = t('ok');
   $('#dur-minus').setAttribute('aria-label', t('shorter'));
