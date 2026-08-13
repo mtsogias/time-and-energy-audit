@@ -83,15 +83,19 @@ const esc = s => { const d = document.createElement('div'); d.textContent = s; r
 
 /* ================= Undo ================= */
 function pushUndo() {
-  undoStack.push({ days: JSON.parse(JSON.stringify(days)), entries: JSON.parse(JSON.stringify(entries)) });
+  undoStack.push({
+    days: JSON.parse(JSON.stringify(days)),
+    entries: JSON.parse(JSON.stringify(entries)),
+    acts: acts.slice(),
+  });
   if (undoStack.length > 50) undoStack.shift();
   $('#undo-btn').classList.remove('hidden');
 }
 function undo() {
   const snap = undoStack.pop();
   if (!snap) return;
-  days = snap.days; entries = snap.entries;
-  save(LS.days, days); save(LS.entries, entries);
+  days = snap.days; entries = snap.entries; acts = snap.acts;
+  save(LS.days, days); save(LS.entries, entries); save(LS.acts, acts);
   if (!undoStack.length) $('#undo-btn').classList.add('hidden');
   activeStart = null;
   refresh();
@@ -179,7 +183,7 @@ function renderLog() {
 
     const covering = list.find(e => ts >= e.start && ts < e.start + e.dur);
 
-    if (covering && covering.activity) {
+    if (covering) {
       const isStart = covering.start === ts;
       const sameNext = list.some(e => e.id === covering.id && ts + RASTER >= e.start && ts + RASTER < e.start + e.dur);
       slot.classList.add('filled', covering.energy > 0 ? 'pos' : (covering.energy < 0 ? 'neg' : 'neutral'));
@@ -236,8 +240,8 @@ function renderLog() {
   ext.className = 'extend';
   ext.textContent = t('extend');
   ext.addEventListener('click', () => {
-    d.span = (d.span || DEFAULT_SPAN) + 2;
     pushUndo();
+    d.span = (d.span || DEFAULT_SPAN) + 2;
     save(LS.days, days);
     renderLog();
   });
@@ -274,8 +278,8 @@ function renderWakeEdit(tl, wr) {
       const val = input.value;
       if (val) {
         const [h, m] = val.split(':').map(Number);
-        d.wake = h * 60 + m;
         pushUndo();
+        d.wake = h * 60 + m;
         save(LS.days, days);
       }
     }
@@ -318,8 +322,8 @@ function renderWakePrompt(tl, edit) {
     if (!v) return;
     const [h, m] = v.split(':').map(Number);
     const prev = dayData();
-    days[key()] = { wake: h * 60 + m, span: prev && prev.span ? prev.span : DEFAULT_SPAN };
     pushUndo();
+    days[key()] = { wake: h * 60 + m, span: prev && prev.span ? prev.span : DEFAULT_SPAN };
     save(LS.days, days);
     scrollFlag = true;
     renderLog();
@@ -333,22 +337,9 @@ function renderWakePrompt(tl, edit) {
 /* ================= Aktiver Block (Auswahl + Live-Bearbeitung) ================= */
 function toggleActive(t) {
   const list = dayEntries();
-  // Slot innerhalb eines bestehenden Eintrags
+  // Slot innerhalb eines bestehenden Eintrags -> Eintrag-Start aktivieren
   const covering = list.find(e => t >= e.start && t < e.start + e.dur);
   if (covering) {
-    // Klick in die Mitte des Blocks -> Block an dieser Stelle teilen,
-    // damit man den Teil ab hier separat mit einem anderen Chip fuellen kann
-    if (t !== covering.start) {
-      const k = key();
-      const first = { ...covering, dur: t - covering.start };
-      const second = { id: uid(), start: t, dur: covering.start + covering.dur - t, activity: null, value: 0, energy: 0 };
-      entries[k] = list.filter(e => e.id !== covering.id).concat([first, second]).sort((a, b) => a.start - b.start);
-      pushUndo();
-      save(LS.entries, entries);
-      activeStart = t;
-      renderLog(); updateBarFromActive();
-      return;
-    }
     activeStart = covering.start;
     renderLog(); updateBarFromActive();
     return;
@@ -379,6 +370,7 @@ function applyToActive() {
   const k = key();
   let list = dayEntries();
   const existing = list.find(e => e.start === activeStart);
+  pushUndo();
 
   if (existing) {
     // Werte ueberschreiben (Dauer bleibt)
@@ -394,7 +386,6 @@ function applyToActive() {
 
   // Gleiche Nachbarn verschmelzen
   entries[k] = mergeAdjacent(list).sort((a, b) => a.start - b.start);
-  pushUndo();
   save(LS.entries, entries);
   if (existing) touchAct(sel.activity);
   renderLog();
@@ -426,9 +417,9 @@ function grow() {
   // Blockiert, wenn naechster Slot belegt ist
   const end = e.start + e.dur;
   if (list.some(x => x.id !== e.id && x.start >= end && x.start < end + RASTER)) return;
+  pushUndo();
   e.dur += RASTER;
   entries[k] = list.sort((a, b) => a.start - b.start);
-  pushUndo();
   save(LS.entries, entries);
   renderLog();
   renderDur();
@@ -440,9 +431,9 @@ function shrink() {
   let list = dayEntries();
   const e = list.find(x => x.start === activeStart);
   if (!e || e.dur <= RASTER) return;
+  pushUndo();
   e.dur -= RASTER;
   entries[k] = list.sort((a, b) => a.start - b.start);
-  pushUndo();
   save(LS.entries, entries);
   renderLog();
   renderDur();
@@ -450,8 +441,8 @@ function shrink() {
 
 function deleteEntry(id) {
   const k = key();
-  entries[k] = dayEntries().filter(x => x.id !== id);
   pushUndo();
+  entries[k] = dayEntries().filter(x => x.id !== id);
   save(LS.entries, entries);
   if (activeStart != null && !dayEntries().some(e => e.start === activeStart)) activeStart = null;
   renderLog();
@@ -470,14 +461,14 @@ function editNote(id) {
     `<textarea id="note-input" placeholder="${t('notePh')}">${esc(e.note || '')}</textarea>`,
     [
       { label: t('save'), class: 'btn-primary', onClick: (body) => {
-        e.note = body.querySelector('#note-input').value.trim();
         pushUndo();
+        e.note = body.querySelector('#note-input').value.trim();
         save(LS.entries, entries);
         renderLog();
       }},
       { label: t('delete'), class: 'btn-danger', onClick: () => {
-        e.note = '';
         pushUndo();
+        e.note = '';
         save(LS.entries, entries);
         renderLog();
       }, close: false },
