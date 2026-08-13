@@ -762,7 +762,10 @@ function renderAnalysis() {
 }
 
 /* ================= Navigation / View ================= */
+let logScroll = 0; // gemerkte Scroll-Position im Log
+
 function switchView(v) {
+  if (view === 'log' && v !== 'log') logScroll = window.scrollY;
   view = v;
   $('#tab-log').classList.toggle('active', v === 'log');
   $('#tab-analyse').classList.toggle('active', v === 'analyse');
@@ -770,6 +773,11 @@ function switchView(v) {
   $('#analyse-view').classList.toggle('hidden', v !== 'analyse');
   $('#stampbar').classList.toggle('hidden', v !== 'log');
   $('#range-toggle').classList.toggle('hidden', v !== 'analyse');
+  if (v === 'log') {
+    scrollFlag = false;
+    renderLog();
+    window.scrollTo({ top: logScroll });
+  }
   if (v === 'analyse') renderAnalysis();
 }
 
