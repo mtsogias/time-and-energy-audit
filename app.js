@@ -7,7 +7,7 @@ const save = (k, v) => localStorage.setItem(k, JSON.stringify(v));
 
 /* ================= i18n ================= */
 const LOCALES = { de: 'de-DE', en: 'en-US', fr: 'fr-FR' };
-let lang = load(LS.lang, 'de');
+let lang = load(LS.lang, 'en');
 const I18N = {
   de: {
     log: 'Log', analyse: 'Analyse', day: 'Tag', week: '7 Tage', today: 'Heute', now: 'Jetzt',
