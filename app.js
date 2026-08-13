@@ -2,6 +2,8 @@
 
 /* ================= Storage ================= */
 const LS = { days: 'tea_days', entries: 'tea_entries', acts: 'tea_acts', sel: 'tea_sel', raster: 'tea_raster', lang: 'tea_lang' };
+const load = (k, fb) => { try { const v = JSON.parse(localStorage.getItem(k)); return v == null ? fb : v; } catch { return fb; } };
+const save = (k, v) => localStorage.setItem(k, JSON.stringify(v));
 
 /* ================= i18n ================= */
 const LOCALES = { de: 'de-DE', en: 'en-US', fr: 'fr-FR' };
@@ -70,9 +72,6 @@ const t = (k, vars) => {
   if (vars) for (const v in vars) s = s.replace(`{${v}}`, vars[v]);
   return s;
 };
-const load = (k, fb) => { try { const v = JSON.parse(localStorage.getItem(k)); return v == null ? fb : v; } catch { return fb; } };
-const save = (k, v) => localStorage.setItem(k, JSON.stringify(v));
-
 /* ================= Helpers ================= */
 const $ = s => document.querySelector(s);
 const pad = n => String(n).padStart(2, '0');
