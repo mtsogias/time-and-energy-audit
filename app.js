@@ -316,7 +316,7 @@ function toggleActive(t) {
   // Slot innerhalb eines bestehenden Eintrags -> Eintrag-Start aktivieren
   const covering = list.find(e => t >= e.start && t < e.start + e.dur);
   if (covering) {
-    activeStart = (activeStart === covering.start) ? null : covering.start;
+    activeStart = covering.start;
     renderLog(); updateBarFromActive();
     return;
   }
