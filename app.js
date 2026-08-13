@@ -320,14 +320,6 @@ function toggleActive(t) {
     renderLog(); updateBarFromActive();
     return;
   }
-  // Leerer Slot, der direkt an einen bestehenden Eintrag grenzt -> diesen aktivieren
-  // (damit man von der anliegenden Box aus mit + verlaengern kann)
-  const adjacent = list.find(e => e.start + e.dur === t);
-  if (adjacent) {
-    activeStart = adjacent.start;
-    renderLog(); updateBarFromActive();
-    return;
-  }
   activeStart = (activeStart === t) ? null : t;
   renderLog();
   updateBarFromActive();
