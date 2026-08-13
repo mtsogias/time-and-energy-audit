@@ -86,13 +86,18 @@ const esc = s => { const d = document.createElement('div'); d.textContent = s; r
 // days:    { 'YYYY-MM-DD': { wake: Minuten seit 0:00, span: Stunden } }
 // entries: { 'YYYY-MM-DD': [{ id, start, dur, activity, value (0-3), energy (-1|0|1), note }] }
 //          start/dur in Minuten, start darf > 1440 sein (nach Mitternacht, gleiche Tagesseite)
-const DEFAULT_ACTS = ['Produktion', 'Mixing/Mastering', 'Content', 'Admin', 'Sales/Calls', 'Lernen', 'Sport', 'Essen', 'Pause', 'Haushalt'];
+const DEFAULT_ACTS = {
+  de: ['Produktion', 'Content', 'Admin', 'Sales', 'Lernen', 'Sport', 'Essen', 'Pause', 'Haushalt'],
+  en: ['Production', 'Content', 'Admin', 'Sales', 'Learning', 'Workout', 'Food', 'Break', 'Chores'],
+  fr: ['Production', 'Contenu', 'Admin', 'Sales', 'Apprentissage', 'Sport', 'Repas', 'Pause', 'Menage'],
+};
+const defaultActs = () => DEFAULT_ACTS[lang] || DEFAULT_ACTS.de;
 const DEFAULT_SPAN = 18;
 const RASTER = 30; // Minuten, fest
 
 let days = load(LS.days, {});
 let entries = load(LS.entries, {});
-let acts = load(LS.acts, DEFAULT_ACTS.slice());
+let acts = load(LS.acts, defaultActs().slice());
 let sel = load(LS.sel, { activity: acts[0] || null, value: 2, energy: 1 });
 let viewDate = new Date();
 if (viewDate.getHours() < 5) viewDate.setDate(viewDate.getDate() - 1); // Nacht gehoert zum Vortag
@@ -792,6 +797,8 @@ function openSettings() {
     b.addEventListener('click', () => {
       lang = b.dataset.lang;
       save(LS.lang, lang);
+      const stored = load(LS.acts, null);
+      if (!stored) { acts = defaultActs().slice(); save(LS.acts, acts); }
       document.querySelectorAll('.lang-seg button').forEach(x => x.classList.toggle('active', x === b));
       renderLang();
       refresh();
