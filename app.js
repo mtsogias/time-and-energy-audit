@@ -26,7 +26,7 @@ const I18N = {
     valLegend: '$ = Busywork \u00B7 $$ = wichtig \u00B7 $$$ = bewegt die Nadel \u00B7 \u2013 = unbewertet',
     energyBal: 'Energie-Bilanz', gives: 'Gibt', drains: 'Zieht', neutralLbl: 'Neutral',
     wakeTime: 'Aufwachzeit', avgLast: '\u00D8 der letzten {n} Tage',
-    settings: 'Einstellungen', language: 'Sprache',
+    settings: 'Einstellungen', language: 'Sprache', undo: 'Rueckgaengig',
   },
   en: {
     log: 'Log', analyse: 'Analysis', day: 'Day', week: '7 Days', today: 'Today', now: 'Now',
@@ -45,7 +45,7 @@ const I18N = {
     valLegend: '$ = busywork \u00B7 $$ = important \u00B7 $$$ = moves the needle \u00B7 \u2013 = unrated',
     energyBal: 'Energy Balance', gives: 'Gives', drains: 'Drains', neutralLbl: 'Neutral',
     wakeTime: 'Wake time', avgLast: 'Avg of last {n} days',
-    settings: 'Settings', language: 'Language',
+    settings: 'Settings', language: 'Language', undo: 'Undo',
   },
   fr: {
     log: 'Journal', analyse: 'Analyse', day: 'Jour', week: '7 Jours', today: 'Aujourd\'hui', now: 'Maintenant',
@@ -64,7 +64,7 @@ const I18N = {
     valLegend: '$ = peu utile \u00B7 $$ = important \u00B7 $$$ = fait avancer \u00B7 \u2013 = non evalue',
     energyBal: 'Bilan d\'energie', gives: 'Donne', drains: 'Pompe', neutralLbl: 'Neutre',
     wakeTime: 'Heure de reveil', avgLast: 'Moy. des {n} derniers jours',
-    settings: 'Reglages', language: 'Langue',
+    settings: 'Reglages', language: 'Langue', undo: 'Annuler',
   },
 };
 const t = (k, vars) => {
@@ -80,6 +80,22 @@ const fmtT = min => `${pad(Math.floor((min % 1440) / 60))}:${pad(min % 60)}`; //
 const fmtDur = min => { const h = Math.floor(min / 60), m = min % 60; if (!h) return `${m}m`; return m ? `${h}h ${m}m` : `${h}h`; };
 const uid = () => Math.random().toString(36).slice(2) + Date.now().toString(36);
 const esc = s => { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; };
+
+/* ================= Undo ================= */
+function pushUndo() {
+  undoStack.push({ days: JSON.parse(JSON.stringify(days)), entries: JSON.parse(JSON.stringify(entries)) });
+  if (undoStack.length > 50) undoStack.shift();
+  $('#undo-btn').classList.remove('hidden');
+}
+function undo() {
+  const snap = undoStack.pop();
+  if (!snap) return;
+  days = snap.days; entries = snap.entries;
+  save(LS.days, days); save(LS.entries, entries);
+  if (!undoStack.length) $('#undo-btn').classList.add('hidden');
+  activeStart = null;
+  refresh();
+}
 
 /* ================= State ================= */
 // days:    { 'YYYY-MM-DD': { wake: Minuten seit 0:00, span: Stunden } }
@@ -104,6 +120,7 @@ let view = 'log';
 let range = 'day';
 let activeStart = null; // aktuell ausgewaehlter Block-Start (Minuten) oder null
 let scrollFlag = true;  // beim naechsten Render zum Jetzt-Block scrollen
+let undoStack = [];     // Snapshots von {days, entries} fuer Rueckgaengig
 
 const key = () => dstr(viewDate);
 const dayData = () => days[key()] || null;
@@ -162,7 +179,7 @@ function renderLog() {
 
     const covering = list.find(e => ts >= e.start && ts < e.start + e.dur);
 
-    if (covering) {
+    if (covering && covering.activity) {
       const isStart = covering.start === ts;
       const sameNext = list.some(e => e.id === covering.id && ts + RASTER >= e.start && ts + RASTER < e.start + e.dur);
       slot.classList.add('filled', covering.energy > 0 ? 'pos' : (covering.energy < 0 ? 'neg' : 'neutral'));
@@ -220,6 +237,7 @@ function renderLog() {
   ext.textContent = t('extend');
   ext.addEventListener('click', () => {
     d.span = (d.span || DEFAULT_SPAN) + 2;
+    pushUndo();
     save(LS.days, days);
     renderLog();
   });
@@ -257,6 +275,7 @@ function renderWakeEdit(tl, wr) {
       if (val) {
         const [h, m] = val.split(':').map(Number);
         d.wake = h * 60 + m;
+        pushUndo();
         save(LS.days, days);
       }
     }
@@ -300,6 +319,7 @@ function renderWakePrompt(tl, edit) {
     const [h, m] = v.split(':').map(Number);
     const prev = dayData();
     days[key()] = { wake: h * 60 + m, span: prev && prev.span ? prev.span : DEFAULT_SPAN };
+    pushUndo();
     save(LS.days, days);
     scrollFlag = true;
     renderLog();
@@ -313,9 +333,22 @@ function renderWakePrompt(tl, edit) {
 /* ================= Aktiver Block (Auswahl + Live-Bearbeitung) ================= */
 function toggleActive(t) {
   const list = dayEntries();
-  // Slot innerhalb eines bestehenden Eintrags -> Eintrag-Start aktivieren
+  // Slot innerhalb eines bestehenden Eintrags
   const covering = list.find(e => t >= e.start && t < e.start + e.dur);
   if (covering) {
+    // Klick in die Mitte des Blocks -> Block an dieser Stelle teilen,
+    // damit man den Teil ab hier separat mit einem anderen Chip fuellen kann
+    if (t !== covering.start) {
+      const k = key();
+      const first = { ...covering, dur: t - covering.start };
+      const second = { id: uid(), start: t, dur: covering.start + covering.dur - t, activity: null, value: 0, energy: 0 };
+      entries[k] = list.filter(e => e.id !== covering.id).concat([first, second]).sort((a, b) => a.start - b.start);
+      pushUndo();
+      save(LS.entries, entries);
+      activeStart = t;
+      renderLog(); updateBarFromActive();
+      return;
+    }
     activeStart = covering.start;
     renderLog(); updateBarFromActive();
     return;
@@ -361,6 +394,7 @@ function applyToActive() {
 
   // Gleiche Nachbarn verschmelzen
   entries[k] = mergeAdjacent(list).sort((a, b) => a.start - b.start);
+  pushUndo();
   save(LS.entries, entries);
   if (existing) touchAct(sel.activity);
   renderLog();
@@ -394,6 +428,7 @@ function grow() {
   if (list.some(x => x.id !== e.id && x.start >= end && x.start < end + RASTER)) return;
   e.dur += RASTER;
   entries[k] = list.sort((a, b) => a.start - b.start);
+  pushUndo();
   save(LS.entries, entries);
   renderLog();
   renderDur();
@@ -407,6 +442,7 @@ function shrink() {
   if (!e || e.dur <= RASTER) return;
   e.dur -= RASTER;
   entries[k] = list.sort((a, b) => a.start - b.start);
+  pushUndo();
   save(LS.entries, entries);
   renderLog();
   renderDur();
@@ -415,6 +451,7 @@ function shrink() {
 function deleteEntry(id) {
   const k = key();
   entries[k] = dayEntries().filter(x => x.id !== id);
+  pushUndo();
   save(LS.entries, entries);
   if (activeStart != null && !dayEntries().some(e => e.start === activeStart)) activeStart = null;
   renderLog();
@@ -434,11 +471,13 @@ function editNote(id) {
     [
       { label: t('save'), class: 'btn-primary', onClick: (body) => {
         e.note = body.querySelector('#note-input').value.trim();
+        pushUndo();
         save(LS.entries, entries);
         renderLog();
       }},
       { label: t('delete'), class: 'btn-danger', onClick: () => {
         e.note = '';
+        pushUndo();
         save(LS.entries, entries);
         renderLog();
       }, close: false },
@@ -553,6 +592,7 @@ function askDeleteChip(name) {
 function renameChip(oldName, newName) {
   const i = acts.indexOf(oldName);
   if (i < 0) return;
+  pushUndo();
   acts[i] = newName;
   save(LS.acts, acts);
   if (sel.activity === oldName) { sel.activity = newName; save(LS.sel, sel); }
@@ -570,6 +610,7 @@ function renameChip(oldName, newName) {
 }
 
 function removeChip(name) {
+  pushUndo();
   acts = acts.filter(a => a !== name);
   save(LS.acts, acts);
   if (sel.activity === name) { sel.activity = acts[0] || null; save(LS.sel, sel); }
@@ -775,6 +816,7 @@ function renderLang() {
   $('#dur-minus').setAttribute('aria-label', t('shorter'));
   $('#dur-plus').setAttribute('aria-label', t('longer'));
   $('#settings-btn').setAttribute('aria-label', t('settings'));
+  $('#undo-btn').setAttribute('aria-label', t('undo'));
 }
 
 function openSettings() {
@@ -801,6 +843,7 @@ function init() {
   $('#tab-log').addEventListener('click', () => switchView('log'));
   $('#tab-analyse').addEventListener('click', () => switchView('analyse'));
   $('#settings-btn').addEventListener('click', openSettings);
+  $('#undo-btn').addEventListener('click', undo);
 
   $('#prev-day').addEventListener('click', () => { viewDate.setDate(viewDate.getDate() - 1); scrollFlag = true; refresh(); });
   $('#next-day').addEventListener('click', () => { viewDate.setDate(viewDate.getDate() + 1); scrollFlag = true; refresh(); });
