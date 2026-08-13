@@ -143,8 +143,8 @@ function renderLog() {
   let nowEl = null;
   let broke = false;
 
-  for (let t = winStart(); t < winEnd(); t += RASTER) {
-    if (t >= 1440 && !broke) {
+  for (let ts = winStart(); ts < winEnd(); ts += RASTER) {
+    if (ts >= 1440 && !broke) {
       broke = true;
       const div = document.createElement('div');
       div.className = 'daybreak';
@@ -157,14 +157,14 @@ function renderLog() {
 
     const time = document.createElement('span');
     time.className = 'time';
-    time.textContent = fmtT(t);
+    time.textContent = fmtT(ts);
     slot.appendChild(time);
 
-    const covering = list.find(e => t >= e.start && t < e.start + e.dur);
+    const covering = list.find(e => ts >= e.start && ts < e.start + e.dur);
 
     if (covering) {
-      const isStart = covering.start === t;
-      const sameNext = list.some(e => e.id === covering.id && t + RASTER >= e.start && t + RASTER < e.start + e.dur);
+      const isStart = covering.start === ts;
+      const sameNext = list.some(e => e.id === covering.id && ts + RASTER >= e.start && ts + RASTER < e.start + e.dur);
       slot.classList.add('filled', covering.energy > 0 ? 'pos' : (covering.energy < 0 ? 'neg' : 'neutral'));
       slot.classList.add(isStart ? (sameNext ? 'grp-start' : 'grp-single') : (sameNext ? 'grp-mid' : 'grp-end'));
 
@@ -203,14 +203,14 @@ function renderLog() {
       slot.appendChild(p);
     }
 
-    if (t === activeStart) slot.classList.add('active');
+    if (ts === activeStart) slot.classList.add('active');
 
-    if (isToday && nowMin >= t && nowMin < t + RASTER) {
+    if (isToday && nowMin >= ts && nowMin < ts + RASTER) {
       slot.classList.add('now');
       nowEl = slot;
     }
 
-    slot.addEventListener('click', () => toggleActive(t));
+    slot.addEventListener('click', () => toggleActive(ts));
     tl.appendChild(slot);
   }
 
