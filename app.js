@@ -438,10 +438,10 @@ let suppressClick = false;
 
 function attachChip(el, name) {
   let timer = null;
-  el.addEventListener('touchstart', (e) => { e.preventDefault(); }, { passive: false });
+  let sx = 0, sy = 0;
   el.addEventListener('pointerdown', (e) => {
-    e.preventDefault();
     suppressClick = false;
+    sx = e.clientX; sy = e.clientY;
     timer = setTimeout(() => {
       timer = null;
       suppressClick = true;
@@ -450,6 +450,9 @@ function attachChip(el, name) {
     }, 500);
   });
   const cancel = () => { if (timer) { clearTimeout(timer); timer = null; } };
+  el.addEventListener('pointermove', (e) => {
+    if (timer && Math.hypot(e.clientX - sx, e.clientY - sy) > 10) cancel();
+  });
   el.addEventListener('pointerup', cancel);
   el.addEventListener('pointerleave', cancel);
   el.addEventListener('pointercancel', cancel);
