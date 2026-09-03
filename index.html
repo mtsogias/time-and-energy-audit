@@ -9,7 +9,7 @@
   <title>Time &amp; Energy Audit</title>
   <link rel="stylesheet" href="styles.css">
 </head>
-<body>
+<body class="no-stamp">
   <header class="topbar">
     <div class="topbar-row">
       <div class="tabs">
@@ -18,7 +18,7 @@
       </div>
       <div id="range-toggle" class="seg hidden">
         <button data-range="day" class="active">Tag</button>
-        <button data-range="week">7 Tage</button>
+        <button data-range="week">Woche</button>
       </div>
       <div class="topbar-actions">
         <button id="undo-btn" class="undo-btn hidden" aria-label="Rueckgaengig">&#8630;</button>
@@ -43,7 +43,7 @@
     <div id="analysis"></div>
   </main>
 
-  <div id="stampbar">
+  <div id="stampbar" class="hidden">
     <div id="activity-chips"></div>
     <div id="new-activity-row" class="hidden">
       <input id="new-activity-input" type="text" placeholder="Neue Aktivitaet..." maxlength="30" autocomplete="off">
@@ -68,6 +68,9 @@
       <button id="dur-plus" class="dur-btn" aria-label="Laenger">+</button>
     </div>
   </div>
+
+  <div id="toast" class="hidden"></div>
+  <div id="print-report" hidden></div>
 
   <!-- Modal fuer Chip-Verwaltung (Umbenennen / Loeschen) und Notiz -->
   <div id="modal-overlay" class="hidden">

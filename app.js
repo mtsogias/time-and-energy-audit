@@ -1,35 +1,47 @@
 'use strict';
 
 /* ================= Storage ================= */
-const LS = { days: 'tea_days', entries: 'tea_entries', acts: 'tea_acts', sel: 'tea_sel', raster: 'tea_raster', lang: 'tea_lang' };
+const LS = { days: 'tea_days', entries: 'tea_entries', acts: 'tea_acts', sel: 'tea_sel', raster: 'tea_raster', lang: 'tea_lang', name: 'tea_name' };
 const load = (k, fb) => { try { const v = JSON.parse(localStorage.getItem(k)); return v == null ? fb : v; } catch { return fb; } };
 const save = (k, v) => localStorage.setItem(k, JSON.stringify(v));
 
 /* ================= i18n ================= */
 const LOCALES = { de: 'de-DE', en: 'en-US', fr: 'fr-FR' };
-let lang = load(LS.lang, 'en');
+let lang = load(LS.lang, 'de');
 const I18N = {
   de: {
-    log: 'Log', analyse: 'Analyse', day: 'Tag', week: '7 Tage', today: 'Heute', now: 'Jetzt',
-    woke: 'Aufgewacht', change: 'aendern', midnight: 'Mitternacht', extend: '+ 2 Stunden',
+    log: 'Log', analyse: 'Analyse', day: 'Tag', week: 'Woche', today: 'Heute', now: 'Jetzt',
+    woke: 'Aufgewacht', change: 'ändern', midnight: 'Mitternacht', extend: '+ 2 Stunden',
     wakeQ: 'Wann bist du aufgewacht?', startDay: 'Tag starten', save: 'Speichern', cancel: 'Abbrechen',
-    wakeHint: 'Dein Tag baut sich ab hier auf.', note: 'Notiz', delEntry: 'Eintrag loeschen',
-    shorter: 'Kuerzer', longer: 'Laenger', tapBlock: 'Block antippen',
-    emptyBlock: 'Leerer Block \u2013 Chip w\u00E4hlen', newCat: '+ Neu', newAct: 'Neue Aktivitaet...',
-    ok: 'OK', rename: 'Umbenennen', delete: 'Loeschen', notePh: 'Notiz zu dieser Aktivitaet...',
-    renameHint: 'Bestehende Eintraege mit dieser Aktivitaet werden automatisch umbenannt.',
-    confirmDelChip: '"{name}" wirklich loeschen?\nVorhandene Eintraege behalten diese Aktivitaet (kursiv).',
-    noEntries: 'Noch keine Eintraege in diesem Zeitraum.', needleMover: 'Needle Mover',
+    wakeHint: 'Dein Tag baut sich ab hier auf.', note: 'Notiz', delEntry: 'Eintrag löschen',
+    shorter: 'Kürzer', longer: 'Länger', tapBlock: 'Block antippen',
+    emptyBlock: 'Leerer Block \u2013 Chip wählen', newCat: '+ Neu', newAct: 'Neue Aktivität...',
+    ok: 'OK', rename: 'Umbenennen', delete: 'Löschen', notePh: 'Notiz zu dieser Aktivität...',
+    renameHint: 'Bestehende Einträge mit dieser Aktivität werden automatisch umbenannt.',
+    confirmDelChip: '"{name}" wirklich löschen?\nVorhandene Einträge behalten diese Aktivität (kursiv).',
+    noEntries: 'Noch keine Einträge in diesem Zeitraum.', needleMover: 'Needle Mover',
     needleTime: '$$$-Zeit: {needle} von {rated} bewerteter Zeit', unrated: 'unbewertet',
-    timePerAct: 'Zeit pro Aktivitaet', energyColor: 'Farbe = Energie-Bilanz (Gruen/Rot/Grau)',
+    timePerAct: 'Zeit pro Aktivität', energyColor: 'Farbe = Energie-Bilanz (Grün/Rot/Grau)',
     valDist: '$-Verteilung',
     valLegend: '$ = Busywork \u00B7 $$ = wichtig \u00B7 $$$ = bewegt die Nadel \u00B7 \u2013 = unbewertet',
     energyBal: 'Energie-Bilanz', gives: 'Gibt', drains: 'Zieht', neutralLbl: 'Neutral',
     wakeTime: 'Aufwachzeit', avgLast: '\u00D8 der letzten {n} Tage',
-    settings: 'Einstellungen', language: 'Sprache', undo: 'Rueckgaengig',
+    settings: 'Einstellungen', language: 'Sprache', undo: 'Rückgängig',
+    share: 'Teilen', pdf: 'PDF', csv: 'CSV', copied: 'Kopiert',
+    weekOverview: 'Woche im Überblick', noLog: 'kein Log',
+    loggedDays: '{done} von {total} Tagen geloggt', weekNeedleHint: 'Pro Tag: Aufwachzeit \u00B7 Zeit \u00B7 Needle-%',
+    logged: 'Geloggt',
+    reportTitle: 'Time & Energy Audit', yourName: 'Name (für den Report)',
+    namePh: 'z. B. Michael', backup: 'Daten-Backup',
+    exportJson: 'Backup herunterladen', importJson: 'Backup einspielen',
+    importOk: 'Backup eingespielt', importBad: 'Datei konnte nicht gelesen werden',
+    confirmImport: 'Aktuelle Daten auf diesem Gerät werden ersetzt. Fortfahren?',
+    shareFailed: 'Teilen nicht möglich', daysWord: 'Tage',
+    timeline: 'Ablauf', topAct: 'Top',
+    valShort: { 0: '–', 1: '$', 2: '$$', 3: '$$$' },
   },
   en: {
-    log: 'Log', analyse: 'Analysis', day: 'Day', week: '7 Days', today: 'Today', now: 'Now',
+    log: 'Log', analyse: 'Analysis', day: 'Day', week: 'Week', today: 'Today', now: 'Now',
     woke: 'Woke up', change: 'edit', midnight: 'Midnight', extend: '+ 2 hours',
     wakeQ: 'When did you wake up?', startDay: 'Start day', save: 'Save', cancel: 'Cancel',
     wakeHint: 'Your day builds from here.', note: 'Note', delEntry: 'Delete entry',
@@ -46,9 +58,21 @@ const I18N = {
     energyBal: 'Energy Balance', gives: 'Gives', drains: 'Drains', neutralLbl: 'Neutral',
     wakeTime: 'Wake time', avgLast: 'Avg of last {n} days',
     settings: 'Settings', language: 'Language', undo: 'Undo',
+    share: 'Share', pdf: 'PDF', csv: 'CSV', copied: 'Copied',
+    weekOverview: 'Week at a glance', noLog: 'no log',
+    loggedDays: '{done} of {total} days logged', weekNeedleHint: 'Per day: wake \u00B7 time \u00B7 needle %',
+    logged: 'Logged',
+    reportTitle: 'Time & Energy Audit', yourName: 'Name (for the report)',
+    namePh: 'e.g. Michael', backup: 'Data backup',
+    exportJson: 'Download backup', importJson: 'Restore backup',
+    importOk: 'Backup restored', importBad: 'Could not read that file',
+    confirmImport: 'This will replace the data on this device. Continue?',
+    shareFailed: 'Sharing not available', daysWord: 'days',
+    timeline: 'Timeline', topAct: 'Top',
+    valShort: { 0: '–', 1: '$', 2: '$$', 3: '$$$' },
   },
   fr: {
-    log: 'Journal', analyse: 'Analyse', day: 'Jour', week: '7 Jours', today: 'Aujourd\'hui', now: 'Maintenant',
+    log: 'Journal', analyse: 'Analyse', day: 'Jour', week: 'Semaine', today: 'Aujourd\'hui', now: 'Maintenant',
     woke: 'Reveil', change: 'modifier', midnight: 'Minuit', extend: '+ 2 heures',
     wakeQ: 'Quand t\'es-tu reveille ?', startDay: 'Demarrer', save: 'Enregistrer', cancel: 'Annuler',
     wakeHint: 'Ta journee se construit ici.', note: 'Note', delEntry: 'Supprimer',
@@ -65,10 +89,23 @@ const I18N = {
     energyBal: 'Bilan d\'energie', gives: 'Donne', drains: 'Pompe', neutralLbl: 'Neutre',
     wakeTime: 'Heure de reveil', avgLast: 'Moy. des {n} derniers jours',
     settings: 'Reglages', language: 'Langue', undo: 'Annuler',
+    share: 'Partager', pdf: 'PDF', csv: 'CSV', copied: 'Copie',
+    weekOverview: 'Semaine en un coup d\'oeil', noLog: 'pas de journal',
+    loggedDays: '{done} jours sur {total}', weekNeedleHint: 'Par jour : reveil \u00B7 temps \u00B7 needle %',
+    logged: 'Journalise',
+    reportTitle: 'Time & Energy Audit', yourName: 'Nom (pour le rapport)',
+    namePh: 'ex. Michael', backup: 'Sauvegarde',
+    exportJson: 'Telecharger la sauvegarde', importJson: 'Restaurer',
+    importOk: 'Sauvegarde restauree', importBad: 'Fichier illisible',
+    confirmImport: 'Les donnees de cet appareil seront remplacees. Continuer ?',
+    shareFailed: 'Partage indisponible', daysWord: 'jours',
+    timeline: 'Deroule', topAct: 'Top',
+    valShort: { 0: '–', 1: '$', 2: '$$', 3: '$$$' },
   },
 };
 const t = (k, vars) => {
   let s = (I18N[lang] && I18N[lang][k]) || (I18N.de[k]) || k;
+  if (typeof s !== 'string') return s;
   if (vars) for (const v in vars) s = s.replace(`{${v}}`, vars[v]);
   return s;
 };
@@ -80,6 +117,23 @@ const fmtT = min => `${pad(Math.floor((min % 1440) / 60))}:${pad(min % 60)}`; //
 const fmtDur = min => { const h = Math.floor(min / 60), m = min % 60; if (!h) return `${m}m`; return m ? `${h}h ${m}m` : `${h}h`; };
 const uid = () => Math.random().toString(36).slice(2) + Date.now().toString(36);
 const esc = s => { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; };
+const loc = () => LOCALES[lang] || 'de-DE';
+const addDays = (d, n) => { const x = new Date(d.getFullYear(), d.getMonth(), d.getDate()); x.setDate(x.getDate() + n); return x; };
+const startOfWeek = d => addDays(d, -((d.getDay() + 6) % 7)); // Montag
+const weekDays = d => { const mon = startOfWeek(d); return Array.from({ length: 7 }, (_, i) => addDays(mon, i)); };
+const fmtRange = (a, b) => {
+  const sameYear = a.getFullYear() === b.getFullYear();
+  const opt = { day: 'numeric', month: 'short', year: sameYear ? undefined : 'numeric' };
+  return `${a.toLocaleDateString(loc(), opt)} \u2013 ${b.toLocaleDateString(loc(), opt)}`;
+};
+const weekdayShort = d => d.toLocaleDateString(loc(), { weekday: 'short' }).replace(/\.$/, '');
+const dayNum = d => d.toLocaleDateString(loc(), { day: 'numeric', month: 'numeric' });
+const energyWord = n => n > 0 ? t('gives') : n < 0 ? t('drains') : t('neutralLbl');
+const valLabel = v => (t('valShort') && t('valShort')[v]) || (v ? '$'.repeat(v) : '\u2013');
+function setStampbarVisible(on) {
+  $('#stampbar').classList.toggle('hidden', !on);
+  document.body.classList.toggle('no-stamp', !on);
+}
 
 /* ================= Undo ================= */
 function pushUndo() {
@@ -118,6 +172,7 @@ let days = load(LS.days, {});
 let entries = load(LS.entries, {});
 let acts = load(LS.acts, defaultActs().slice());
 let sel = load(LS.sel, { activity: acts[0] || null, value: 2, energy: 1 });
+let displayName = load(LS.name, '');
 let viewDate = new Date();
 if (viewDate.getHours() < 5) viewDate.setDate(viewDate.getDate() - 1); // Nacht gehoert zum Vortag
 let view = 'log';
@@ -129,8 +184,21 @@ let undoStack = [];     // Snapshots von {days, entries} fuer Rueckgaengig
 const key = () => dstr(viewDate);
 const dayData = () => days[key()] || null;
 const dayEntries = () => entries[key()] || [];
-const winStart = () => Math.floor(dayData().wake / RASTER) * RASTER;
-const winEnd = () => winStart() + (dayData().span || DEFAULT_SPAN) * 60;
+function wakeStart() {
+  return Math.floor((dayData()?.wake || 0) / RASTER) * RASTER;
+}
+function winStart() {
+  const wake = wakeStart();
+  const first = dayEntries().reduce((m, e) => Math.min(m, e.start), Infinity);
+  const start = Number.isFinite(first) ? Math.min(wake, first) : wake;
+  return Math.floor(start / RASTER) * RASTER;
+}
+function winEnd() {
+  let end = wakeStart() + (dayData()?.span || DEFAULT_SPAN) * 60;
+  const last = dayEntries().reduce((m, e) => Math.max(m, e.start + e.dur), 0);
+  if (last > end) end = last;
+  return Math.ceil(end / RASTER) * RASTER;
+}
 
 /* ================= Timeline ================= */
 function renderLog() {
@@ -140,12 +208,13 @@ function renderLog() {
   const d = dayData();
 
   if (!d) {
+    setStampbarVisible(false);
     renderWakePrompt(tl, false);
     window.scrollTo({ top: 0 });
     return;
   }
 
-  $('#stampbar').classList.remove('hidden');
+  setStampbarVisible(view === 'log');
 
   // Aufwach-Zeile
   const wr = document.createElement('button');
@@ -224,7 +293,7 @@ function renderLog() {
       slot.appendChild(p);
     }
 
-    if (ts === activeStart) slot.classList.add('active');
+    if (covering ? covering.start === activeStart : ts === activeStart) slot.classList.add('active');
 
     if (isToday && nowMin >= ts && nowMin < ts + RASTER) {
       slot.classList.add('now');
@@ -335,16 +404,16 @@ function renderWakePrompt(tl, edit) {
 }
 
 /* ================= Aktiver Block (Auswahl + Live-Bearbeitung) ================= */
-function toggleActive(t) {
+function toggleActive(ts) {
   const list = dayEntries();
   // Slot innerhalb eines bestehenden Eintrags -> Eintrag-Start aktivieren
-  const covering = list.find(e => t >= e.start && t < e.start + e.dur);
+  const covering = list.find(e => ts >= e.start && ts < e.start + e.dur);
   if (covering) {
     activeStart = covering.start;
     renderLog(); updateBarFromActive();
     return;
   }
-  activeStart = (activeStart === t) ? null : t;
+  activeStart = (activeStart === ts) ? null : ts;
   renderLog();
   updateBarFromActive();
 }
@@ -364,30 +433,36 @@ function updateBarFromActive() {
   renderChips(); renderSel(); renderDur();
 }
 
+function sameStamp(a, b) {
+  return a.activity === b.activity && a.value === b.value && a.energy === b.energy
+    && (a.note || '') === (b.note || '');
+}
+
 // Leisten-Aktionen aendern den aktiven Block live
 function applyToActive() {
   if (activeStart == null) return;
   const k = key();
   let list = dayEntries();
   const existing = list.find(e => e.start === activeStart);
+  if (!existing && !sel.activity) return;
+  const coverStart = activeStart;
   pushUndo();
 
   if (existing) {
-    // Werte ueberschreiben (Dauer bleibt)
-    existing.activity = sel.activity;
+    existing.activity = sel.activity || existing.activity;
     existing.value = sel.value;
     existing.energy = sel.energy;
-  } else if (sel.activity) {
-    // Leer -> neu anlegen (1 Raster-Slot)
-    list = list.filter(e => !(activeStart >= e.start && activeStart < e.start + e.dur));
-    list.push({ id: uid(), start: activeStart, dur: RASTER, activity: sel.activity, value: sel.value, energy: sel.energy });
+  } else {
+    list = list.filter(e => !(coverStart >= e.start && coverStart < e.start + e.dur));
+    list.push({ id: uid(), start: coverStart, dur: RASTER, activity: sel.activity, value: sel.value, energy: sel.energy });
     entries[k] = list;
   }
 
-  // Gleiche Nachbarn verschmelzen
+  if (sel.activity) touchAct(sel.activity);
   entries[k] = mergeAdjacent(list).sort((a, b) => a.start - b.start);
   save(LS.entries, entries);
-  if (existing) touchAct(sel.activity);
+  const merged = entries[k].find(e => coverStart >= e.start && coverStart < e.start + e.dur);
+  if (merged) activeStart = merged.start;
   renderLog();
   renderChips();
   renderDur();
@@ -398,8 +473,7 @@ function mergeAdjacent(list) {
   const sorted = [...list].sort((a, b) => a.start - b.start);
   for (const e of sorted) {
     const prev = out[out.length - 1];
-    if (prev && prev.start + prev.dur === e.start &&
-        prev.activity === e.activity && prev.value === e.value && prev.energy === e.energy) {
+    if (prev && prev.start + prev.dur === e.start && sameStamp(prev, e)) {
       prev.dur += e.dur;
     } else {
       out.push({ ...e });
@@ -414,11 +488,26 @@ function grow() {
   let list = dayEntries();
   const e = list.find(x => x.start === activeStart);
   if (!e) return;
-  // Blockiert, wenn naechster Slot belegt ist
   const end = e.start + e.dur;
-  if (list.some(x => x.id !== e.id && x.start >= end && x.start < end + RASTER)) return;
+  const blocker = list.find(x => x.id !== e.id && x.start < end + RASTER && x.start + x.dur > end);
+  if (blocker) {
+    if (blocker.start === end && sameStamp(e, blocker)) {
+      pushUndo();
+      e.dur += blocker.dur;
+      entries[k] = list.filter(x => x.id !== blocker.id).sort((a, b) => a.start - b.start);
+      save(LS.entries, entries);
+      renderLog();
+      renderDur();
+    }
+    return;
+  }
   pushUndo();
   e.dur += RASTER;
+  const d = dayData();
+  if (d && e.start + e.dur > wakeStart() + (d.span || DEFAULT_SPAN) * 60) {
+    d.span = Math.ceil((e.start + e.dur - wakeStart()) / 60);
+    save(LS.days, days);
+  }
   entries[k] = list.sort((a, b) => a.start - b.start);
   save(LS.entries, entries);
   renderLog();
@@ -471,7 +560,7 @@ function editNote(id) {
         e.note = '';
         save(LS.entries, entries);
         renderLog();
-      }, close: false },
+      }},
       { label: t('cancel'), class: 'btn-secondary' },
     ]
   );
@@ -483,8 +572,8 @@ function showModal(title, bodyHTML, actions) {
   const overlay = $('#modal-overlay');
   $('#modal-title').textContent = title;
   $('#modal-body').innerHTML = bodyHTML;
-  const acts = $('#modal-actions');
-  acts.innerHTML = '';
+  const actsEl = $('#modal-actions');
+  actsEl.innerHTML = '';
   actions.forEach(a => {
     const b = document.createElement('button');
     b.textContent = a.label;
@@ -493,7 +582,7 @@ function showModal(title, bodyHTML, actions) {
       if (a.onClick) a.onClick($('#modal-body'));
       if (a.close !== false) closeModal();
     });
-    acts.appendChild(b);
+    actsEl.appendChild(b);
   });
   overlay.classList.remove('hidden');
 }
@@ -625,6 +714,7 @@ function addActivity() {
   i.value = '';
   $('#new-activity-row').classList.add('hidden');
   renderChips();
+  applyToActive();
 }
 
 function renderSel() {
@@ -644,27 +734,59 @@ function renderDur() {
   const e = activeEntry();
   if (!e) {
     txt.textContent = t('emptyBlock');
-    minus.disabled = true; plus.disabled = false;
+    minus.disabled = true; plus.disabled = true;
     return;
   }
   txt.textContent = `${fmtT(e.start)} \u2013 ${fmtT(e.start + e.dur)} (${fmtDur(e.dur)})`;
   minus.disabled = e.dur <= RASTER;
-  // Plus blockiert, wenn naechster Slot belegt
+  // Plus blockiert, wenn naechster Slot belegt (ausser identischer Nachbar zum Mergen)
   const end = e.start + e.dur;
-  const blocked = dayEntries().some(x => x.id !== e.id && x.start >= end && x.start < end + RASTER);
-  plus.disabled = blocked;
+  const blocker = dayEntries().find(x => x.id !== e.id && x.start < end + RASTER && x.start + x.dur > end);
+  plus.disabled = !!(blocker && !(blocker.start === end && sameStamp(e, blocker)));
 }
 
 /* ================= Analyse ================= */
+function periodDates() {
+  if (range === 'week') return weekDays(viewDate);
+  return [new Date(viewDate.getFullYear(), viewDate.getMonth(), viewDate.getDate())];
+}
+
 function collect() {
-  if (range === 'day') return dayEntries();
   const all = [];
-  for (let i = 0; i < 7; i++) {
-    const d = new Date(viewDate);
-    d.setDate(d.getDate() - i);
-    all.push(...(entries[dstr(d)] || []));
-  }
+  for (const d of periodDates()) all.push(...(entries[dstr(d)] || []));
   return all;
+}
+
+function statsFor(list) {
+  const sum = (pred) => list.reduce((s, e) => s + (pred(e) ? e.dur : 0), 0);
+  const total = sum(() => true);
+  const needle = sum(e => e.value === 3);
+  const rated = sum(e => e.value > 0);
+  const neutral = sum(e => e.value === 0);
+  const green = sum(e => e.energy > 0);
+  const red = sum(e => e.energy < 0);
+  const neutralEn = sum(e => e.energy === 0);
+  const byVal = { 0: 0, 1: 0, 2: 0, 3: 0 };
+  list.forEach(e => { byVal[e.value] = (byVal[e.value] || 0) + e.dur; });
+  const byAct = {};
+  list.forEach(e => {
+    const a = byAct[e.activity] || (byAct[e.activity] = { min: 0, g: 0, r: 0, n: 0 });
+    a.min += e.dur;
+    if (e.energy > 0) a.g += e.dur; else if (e.energy < 0) a.r += e.dur; else a.n += e.dur;
+  });
+  const topAct = Object.entries(byAct).sort((a, b) => b[1].min - a[1].min)[0];
+  return {
+    total, needle, rated, neutral, green, red, neutralEn, byVal, byAct,
+    needlePct: rated > 0 ? Math.round(needle / rated * 100) : null,
+    topAct: topAct ? topAct[0] : null,
+  };
+}
+
+function dayBundle(dateObj) {
+  const k = dstr(dateObj);
+  const list = entries[k] || [];
+  const dd = days[k];
+  return { key: k, date: dateObj, wake: dd ? dd.wake : null, started: !!dd, list, stats: statsFor(list) };
 }
 
 function card(title, inner) {
@@ -682,41 +804,103 @@ function barRow(label, pct, color, val) {
   `</div>`;
 }
 
+function kpi(label, num, extraClass) {
+  return `<div class="kpi"><div class="kpi-n${extraClass ? ' ' + extraClass : ''}">${num}</div><div class="kpi-l">${label}</div></div>`;
+}
+
+function renderExportBar() {
+  const bar = document.createElement('div');
+  bar.className = 'export-bar';
+  bar.innerHTML =
+    `<button class="primary" data-ex="share">${t('share')}</button>` +
+    `<button data-ex="pdf">${t('pdf')}</button>` +
+    `<button data-ex="csv">${t('csv')}</button>`;
+  bar.addEventListener('click', ev => {
+    const btn = ev.target.closest('button');
+    if (!btn) return;
+    if (btn.dataset.ex === 'share') shareReport();
+    if (btn.dataset.ex === 'pdf') exportPDF();
+    if (btn.dataset.ex === 'csv') exportCSV();
+  });
+  return bar;
+}
+
+function renderWeekStrip(box, bundles) {
+  const logged = bundles.filter(b => b.started || b.list.length).length;
+  const rows = bundles.map(b => {
+    const today = dstr(todayDate()) === b.key;
+    if (!b.started && !b.list.length) {
+      return `<button class="week-day empty${today ? ' today' : ''}" data-date="${b.key}">` +
+        `<span class="wd-name">${esc(weekdayShort(b.date))}</span>` +
+        `<span class="wd-date">${esc(dayNum(b.date))}</span>` +
+        `<span class="wd-meta">${t('noLog')}</span>` +
+        `<span class="wd-needle muted">\u2013</span>` +
+      `</button>`;
+    }
+    const s = b.stats;
+    const g = s.total ? Math.round(s.green / s.total * 100) : 0;
+    const r = s.total ? Math.round(s.red / s.total * 100) : 0;
+    const needle = s.needlePct == null ? '\u2013' : `${s.needlePct}%`;
+    const meta = [b.wake != null ? fmtT(b.wake) : null, s.total ? fmtDur(s.total) : null].filter(Boolean).join(' \u00B7 ');
+    const bar = `linear-gradient(to right, var(--green) 0 ${g}%, var(--red) ${g}% ${g + r}%, var(--neutral) ${g + r}% 100%)`;
+    return `<button class="week-day${today ? ' today' : ''}" data-date="${b.key}">` +
+      `<span class="wd-name">${esc(weekdayShort(b.date))}</span>` +
+      `<span class="wd-date">${esc(dayNum(b.date))}</span>` +
+      `<span class="wd-meta">${esc(meta)}</span>` +
+      `<span class="energy-mini" aria-hidden="true" style="background:${bar}"></span>` +
+      `<span class="wd-needle">${needle}</span>` +
+    `</button>`;
+  }).join('');
+
+  const wrap = card(
+    t('weekOverview'),
+    `<div class="hint" style="margin:0 0 10px">${t('loggedDays', { done: logged, total: bundles.length })} \u00B7 ${t('weekNeedleHint')}</div>` +
+    `<div class="week-days">${rows}</div>`
+  );
+  wrap.querySelectorAll('.week-day').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const [y, m, d] = btn.dataset.date.split('-').map(Number);
+      viewDate = new Date(y, m - 1, d);
+      scrollFlag = true;
+      switchView('log');
+      refresh();
+    });
+  });
+  box.appendChild(wrap);
+}
+
 function renderAnalysis() {
   const box = $('#analysis');
   box.innerHTML = '';
+  const dates = periodDates();
+  const bundles = dates.map(dayBundle);
   const list = collect();
+  const s = statsFor(list);
+
+  if (list.length) box.appendChild(renderExportBar());
+
+  if (range === 'week') renderWeekStrip(box, bundles);
 
   if (!list.length) {
-    box.innerHTML = `<div class="card"><p class="hint">${t('noEntries')}</p></div>`;
+    box.insertAdjacentHTML('beforeend', `<div class="card"><p class="hint">${t('noEntries')}</p></div>`);
     return;
   }
 
-  const total = list.reduce((s, e) => s + e.dur, 0);
-  const neutral = list.filter(e => e.value === 0).reduce((s, e) => s + e.dur, 0);
-  const rated = total - neutral;
-  const needle = list.filter(e => e.value === 3).reduce((s, e) => s + e.dur, 0);
-  const green = list.filter(e => e.energy > 0).reduce((s, e) => s + e.dur, 0);
-  const red = list.filter(e => e.energy < 0).reduce((s, e) => s + e.dur, 0);
-  const neutralEn = list.filter(e => e.energy === 0).reduce((s, e) => s + e.dur, 0);
-  const byVal = { 1: 0, 2: 0, 3: 0 };
-  list.forEach(e => { if (e.value > 0) byVal[e.value] += e.dur; });
-  const byAct = {};
-  list.forEach(e => {
-    const a = byAct[e.activity] || (byAct[e.activity] = { min: 0, g: 0, r: 0, n: 0 });
-    a.min += e.dur;
-    if (e.energy > 0) a.g += e.dur; else if (e.energy < 0) a.r += e.dur; else a.n += e.dur;
-  });
+  const wakes = bundles.filter(b => b.wake != null).map(b => b.wake);
+  const avgWake = wakes.length ? Math.round(wakes.reduce((a, b) => a + b, 0) / wakes.length) : null;
 
-  // Needle Mover (nur bewertete Zeit)
-  const needlePct = rated > 0 ? Math.round(needle / rated * 100) : 0;
   box.appendChild(card(t('needleMover'),
-    `<div class="needle-num">${needlePct}%</div>` +
-    `<div class="hint">${t('needleTime', { needle: fmtDur(needle), rated: fmtDur(rated) })}` +
-    (neutral > 0 ? ` \u00B7 ${fmtDur(neutral)} ${t('unrated')}` : '') + `</div>`));
+    `<div class="kpis">` +
+      kpi(t('needleMover'), s.needlePct == null ? '\u2013' : `${s.needlePct}%`, 'amber') +
+      kpi(t('logged'), fmtDur(s.total)) +
+      kpi(t('gives') + ' / ' + t('drains'), `${fmtDur(s.green)} / ${fmtDur(s.red)}`) +
+      kpi(t('wakeTime'), avgWake != null ? fmtT(avgWake) : '\u2013') +
+    `</div>` +
+    `<div class="hint">${t('needleTime', { needle: fmtDur(s.needle), rated: fmtDur(s.rated) })}` +
+    (s.neutral > 0 ? ` \u00B7 ${fmtDur(s.neutral)} ${t('unrated')}` : '') +
+    `</div>`));
 
-  // Zeit pro Aktivitaet (Balken relativ zum Maximum, Farbe = Energie-Bilanz)
-  const sorted = Object.entries(byAct).sort((a, b) => b[1].min - a[1].min);
+  const sorted = Object.entries(s.byAct).sort((a, b) => b[1].min - a[1].min);
   const max = sorted[0][1].min;
   box.appendChild(card(t('timePerAct'),
     sorted.map(([n, a]) => {
@@ -725,40 +909,282 @@ function renderAnalysis() {
     }).join('') +
     `<div class="hint">${t('energyColor')}</div>`));
 
-  // $-Verteilung (Anteil an bewerteter Zeit)
   box.appendChild(card(t('valDist'),
     [3, 2, 1].map(v =>
       barRow(`<span style="color:var(--amber);font-weight:700">${'$'.repeat(v)}</span>`,
-        rated > 0 ? Math.round(byVal[v] / rated * 100) : 0, 'var(--amber)',
-        `${fmtDur(byVal[v])} \u00B7 ${rated > 0 ? Math.round(byVal[v] / rated * 100) : 0}%`)
+        s.rated > 0 ? Math.round(s.byVal[v] / s.rated * 100) : 0, 'var(--amber)',
+        `${fmtDur(s.byVal[v] || 0)} \u00B7 ${s.rated > 0 ? Math.round((s.byVal[v] || 0) / s.rated * 100) : 0}%`)
     ).join('') +
-    (neutral > 0 ? barRow('<span style="color:var(--muted)">\u2013</span>',
-      Math.round(neutral / total * 100), 'var(--muted-2)',
-      `${fmtDur(neutral)} \u00B7 ${Math.round(neutral / total * 100)}%`) : '') +
+    (s.neutral > 0
+      ? `<div class="hint">${fmtDur(s.neutral)} ${t('unrated')}</div>`
+      : '') +
     `<div class="hint">${t('valLegend')}</div>`));
 
-  // Energie-Bilanz
   box.appendChild(card(t('energyBal'),
-    barRow(t('gives'), Math.round(green / total * 100), 'var(--green)', fmtDur(green)) +
-    barRow(t('drains'), Math.round(red / total * 100), 'var(--red)', fmtDur(red)) +
-    (neutralEn > 0 ? barRow(t('neutralLbl'), Math.round(neutralEn / total * 100), 'var(--neutral)', fmtDur(neutralEn)) : '')));
+    barRow(t('gives'), s.total ? Math.round(s.green / s.total * 100) : 0, 'var(--green)', fmtDur(s.green)) +
+    barRow(t('drains'), s.total ? Math.round(s.red / s.total * 100) : 0, 'var(--red)', fmtDur(s.red)) +
+    (s.neutralEn > 0 ? barRow(t('neutralLbl'), Math.round(s.neutralEn / s.total * 100), 'var(--neutral)', fmtDur(s.neutralEn)) : '')));
+}
 
-  // Ø Aufwachzeit (nur Woche)
-  if (range === 'week') {
-    const wakes = [];
-    for (let i = 0; i < 7; i++) {
-      const d = new Date(viewDate);
-      d.setDate(d.getDate() - i);
-      const dd = days[dstr(d)];
-      if (dd && dd.wake != null) wakes.push(dd.wake);
-    }
-    if (wakes.length) {
-      const avg = Math.round(wakes.reduce((s, w) => s + w, 0) / wakes.length);
-      box.appendChild(card(t('wakeTime'),
-        `<div class="needle-num small">${fmtT(avg)}</div>` +
-        `<div class="hint">${t('avgLast', { n: wakes.length })}</div>`));
-    }
+/* ================= Report / Export ================= */
+function reportMeta() {
+  const dates = periodDates();
+  const from = dstr(dates[0]);
+  const to = dstr(dates[dates.length - 1]);
+  const label = dates.length === 1
+    ? dates[0].toLocaleDateString(loc(), { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
+    : fmtRange(dates[0], dates[dates.length - 1]);
+  const filename = dates.length === 1 ? `TEA-${from}` : `TEA-${from}-${to}`;
+  return { dates, from, to, label, filename, title: `${t('reportTitle')} \u00B7 ${label}` };
+}
+
+function buildReportModel() {
+  const meta = reportMeta();
+  const bundles = meta.dates.map(dayBundle);
+  const list = collect();
+  return { meta, bundles, list, stats: statsFor(list), name: (displayName || '').trim() };
+}
+
+function reportInnerHTML(model) {
+  const { meta, bundles, list, stats: s, name } = model;
+  const wakes = bundles.filter(b => b.wake != null).map(b => b.wake);
+  const avgWake = wakes.length ? Math.round(wakes.reduce((a, b) => a + b, 0) / wakes.length) : null;
+  const loggedN = bundles.filter(b => b.started || b.list.length).length;
+
+  let html = `<h1>${esc(t('reportTitle'))}</h1>` +
+    `<div class="sub">${name ? esc(name) + ' \u00B7 ' : ''}${esc(meta.label)}</div>` +
+    `<div class="kpis">` +
+      `<div class="kpi"><div class="kpi-n amber">${s.needlePct == null ? '\u2013' : s.needlePct + '%'}</div><div class="kpi-l">${esc(t('needleMover'))}</div></div>` +
+      `<div class="kpi"><div class="kpi-n">${esc(fmtDur(s.total))}</div><div class="kpi-l">${esc(t('logged'))}</div></div>` +
+      `<div class="kpi"><div class="kpi-n">${esc(fmtDur(s.green))} / ${esc(fmtDur(s.red))}</div><div class="kpi-l">${esc(t('gives'))} / ${esc(t('drains'))}</div></div>` +
+      `<div class="kpi"><div class="kpi-n">${avgWake != null ? fmtT(avgWake) : '\u2013'}</div><div class="kpi-l">${esc(t('wakeTime'))}</div></div>` +
+    `</div>`;
+
+  if (bundles.length > 1) {
+    html += `<h2>${esc(t('weekOverview'))} \u00B7 ${esc(t('loggedDays', { done: loggedN, total: bundles.length }))}</h2>` +
+      `<table><thead><tr><th></th><th>${esc(t('wakeTime'))}</th><th>${esc(t('logged'))}</th><th>$$$</th><th>${esc(t('gives'))}</th><th>${esc(t('drains'))}</th><th>${esc(t('topAct'))}</th></tr></thead><tbody>` +
+      bundles.map(b => {
+        if (!b.started && !b.list.length) {
+          return `<tr><td>${esc(weekdayShort(b.date))} ${esc(dayNum(b.date))}</td><td colspan="6" class="muted">${esc(t('noLog'))}</td></tr>`;
+        }
+        const st = b.stats;
+        return `<tr>` +
+          `<td>${esc(weekdayShort(b.date))} ${esc(dayNum(b.date))}</td>` +
+          `<td>${b.wake != null ? fmtT(b.wake) : '\u2013'}</td>` +
+          `<td>${st.total ? fmtDur(st.total) : '\u2013'}</td>` +
+          `<td class="amber">${st.needlePct == null ? '\u2013' : st.needlePct + '%'}</td>` +
+          `<td class="pos">${st.green ? fmtDur(st.green) : '\u2013'}</td>` +
+          `<td class="neg">${st.red ? fmtDur(st.red) : '\u2013'}</td>` +
+          `<td>${st.topAct ? esc(st.topAct) : '\u2013'}</td>` +
+        `</tr>`;
+      }).join('') +
+      `</tbody></table>`;
   }
+
+  if (list.length) {
+    const sorted = Object.entries(s.byAct).sort((a, b) => b[1].min - a[1].min);
+    html += `<h2>${esc(t('timePerAct'))}</h2><table><tbody>` +
+      sorted.map(([n, a]) => `<tr><td>${esc(n)}</td><td>${fmtDur(a.min)}</td></tr>`).join('') +
+      `</tbody></table>`;
+
+    html += `<h2>${esc(t('valDist'))}</h2><table><tbody>` +
+      [3, 2, 1].map(v => `<tr><td class="amber">${'$'.repeat(v)}</td><td>${fmtDur(s.byVal[v] || 0)}</td><td>${s.rated ? Math.round((s.byVal[v] || 0) / s.rated * 100) : 0}%</td></tr>`).join('') +
+      `</tbody></table>`;
+  }
+
+  bundles.forEach(b => {
+    if (!b.list.length && !b.started) return;
+    const heading = `${weekdayShort(b.date)} ${b.date.toLocaleDateString(loc(), { day: 'numeric', month: 'short' })}` +
+      (b.wake != null ? ` \u00B7 ${t('woke')} ${fmtT(b.wake)}` : '');
+    html += `<div class="day-h">${esc(heading)}</div>`;
+    if (!b.list.length) {
+      html += `<div class="muted">${esc(t('noEntries'))}</div>`;
+      return;
+    }
+    const rows = [...b.list].sort((a, c) => a.start - c.start).map(e => {
+      const enClass = e.energy > 0 ? 'pos' : e.energy < 0 ? 'neg' : 'muted';
+      return `<tr>` +
+        `<td>${fmtT(e.start)}\u2013${fmtT(e.start + e.dur)}</td>` +
+        `<td>${esc(e.activity)}</td>` +
+        `<td class="amber">${esc(valLabel(e.value))}</td>` +
+        `<td class="${enClass}">${esc(energyWord(e.energy))}</td>` +
+        `<td class="note">${e.note ? esc(e.note) : ''}</td>` +
+      `</tr>`;
+    }).join('');
+    html += `<table><tbody>${rows}</tbody></table>`;
+  });
+
+  return html;
+}
+
+const REPORT_CSS = `body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#18181b;max-width:720px;margin:0 auto;padding:24px;line-height:1.45}
+h1{font-size:20px;margin:0 0 4px}
+.sub{color:#52525b;margin:0 0 18px;font-size:13px}
+h2{font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:#71717a;margin:22px 0 8px;font-weight:700}
+.kpis{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.kpi{border:1px solid #e4e4e7;border-radius:8px;padding:10px;background:#fafafa}
+.kpi-n{font-size:20px;font-weight:700;font-family:ui-monospace,Menlo,monospace}
+.kpi-l{font-size:9px;color:#71717a;text-transform:uppercase;letter-spacing:.08em;margin-top:4px}
+.amber{color:#b45309;font-weight:700}
+.pos{color:#047857}
+.neg{color:#b91c1c}
+.muted{color:#71717a}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{padding:5px 6px;border-bottom:1px solid #e4e4e7;text-align:left;vertical-align:top}
+.day-h{margin-top:16px;font-size:14px;font-weight:700}
+.note{color:#52525b;font-style:italic}
+@media (min-width:560px){.kpis{grid-template-columns:1fr 1fr 1fr 1fr}}`;
+
+function buildReportHTML() {
+  const model = buildReportModel();
+  return `<!DOCTYPE html><html lang="${lang}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(model.meta.title)}</title><style>${REPORT_CSS}</style></head><body>${reportInnerHTML(model)}</body></html>`;
+}
+
+function buildReportText() {
+  const { meta, bundles, list, stats: s, name } = buildReportModel();
+  const lines = [t('reportTitle'), name, meta.label, ''].filter(x => x != null && x !== '');
+  lines.push(`${t('needleMover')}: ${s.needlePct == null ? '–' : s.needlePct + '%'}`);
+  lines.push(`${t('needleTime', { needle: fmtDur(s.needle), rated: fmtDur(s.rated) })}`);
+  lines.push(`${t('gives')} ${fmtDur(s.green)} \u00B7 ${t('drains')} ${fmtDur(s.red)}`);
+  lines.push(`${t('logged')}: ${fmtDur(s.total)}`);
+  lines.push('');
+  if (bundles.length > 1) {
+    bundles.forEach(b => {
+      const label = `${weekdayShort(b.date)} ${dayNum(b.date)}`;
+      if (!b.started && !b.list.length) { lines.push(`${label}  ${t('noLog')}`); return; }
+      const st = b.stats;
+      lines.push(`${label}  ${b.wake != null ? fmtT(b.wake) : '–'}  ${st.total ? fmtDur(st.total) : '–'}  $$$ ${st.needlePct == null ? '–' : st.needlePct + '%'}`);
+    });
+    lines.push('');
+  }
+  if (list.length) {
+    lines.push(`— ${t('timePerAct')} —`);
+    Object.entries(s.byAct).sort((a, b) => b[1].min - a[1].min)
+      .forEach(([n, a]) => lines.push(`${n}  ${fmtDur(a.min)}`));
+    lines.push('');
+    bundles.forEach(b => {
+      if (!b.list.length) return;
+      lines.push(`— ${weekdayShort(b.date)} ${dayNum(b.date)}${b.wake != null ? ' \u00B7 ' + fmtT(b.wake) : ''} —`);
+      [...b.list].sort((a, c) => a.start - c.start).forEach(e => {
+        lines.push(`${fmtT(e.start)}-${fmtT(e.start + e.dur)}  ${e.activity}  ${valLabel(e.value)}  ${energyWord(e.energy)}`);
+        if (e.note) lines.push(`  ${e.note}`);
+      });
+      lines.push('');
+    });
+  }
+  return lines.join('\n').trim();
+}
+
+function fillPrintReport() {
+  $('#print-report').innerHTML = reportInnerHTML(buildReportModel());
+}
+
+async function shareReport() {
+  const model = buildReportModel();
+  const title = model.meta.title;
+  const text = buildReportText();
+  try {
+    const file = new File([buildReportHTML()], `${model.meta.filename}.html`, { type: 'text/html' });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({ files: [file], title, text });
+      return;
+    }
+  } catch (e) {
+    if (e.name === 'AbortError') return;
+  }
+  try {
+    if (navigator.share) {
+      await navigator.share({ title, text });
+      return;
+    }
+  } catch (e) {
+    if (e.name === 'AbortError') return;
+  }
+  try {
+    await navigator.clipboard.writeText(text);
+    showToast(t('copied'));
+  } catch {
+    showToast(t('shareFailed'));
+  }
+}
+
+function exportPDF() {
+  fillPrintReport();
+  window.print();
+}
+
+function csvEscape(v) {
+  const x = String(v ?? '');
+  if (/[",\n\r]/.test(x)) return `"${x.replace(/"/g, '""')}"`;
+  return x;
+}
+
+function exportCSV() {
+  const { meta, bundles } = buildReportModel();
+  const rows = [['date', 'wake', 'start', 'end', 'duration_min', 'activity', 'value', 'energy', 'note']];
+  bundles.forEach(b => {
+    const wake = b.wake != null ? fmtT(b.wake) : '';
+    if (!b.list.length) {
+      if (b.started) rows.push([b.key, wake, '', '', '', '', '', '', '']);
+      return;
+    }
+    [...b.list].sort((a, c) => a.start - c.start).forEach(e => {
+      rows.push([b.key, wake, fmtT(e.start), fmtT(e.start + e.dur), e.dur, e.activity, e.value, e.energy, e.note || '']);
+    });
+  });
+  const csv = rows.map(r => r.map(csvEscape).join(',')).join('\n');
+  downloadBlob(`${meta.filename}.csv`, csv, 'text/csv;charset=utf-8');
+}
+
+function downloadBlob(filename, content, mime) {
+  const blob = new Blob([content], { type: mime });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1500);
+}
+
+let toastTimer = null;
+function showToast(msg) {
+  const el = $('#toast');
+  el.textContent = msg;
+  el.classList.remove('hidden');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.add('hidden'), 2200);
+}
+
+function exportBackup() {
+  const data = { v: 1, days, entries, acts, sel, lang, name: displayName };
+  downloadBlob(`tea-backup-${dstr(new Date())}.json`, JSON.stringify(data, null, 2), 'application/json');
+}
+
+function importBackupFile(file) {
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const data = JSON.parse(reader.result);
+      if (!data || typeof data !== 'object' || (!data.days && !data.entries)) throw new Error('bad');
+      if (!confirm(t('confirmImport'))) return;
+      pushUndo();
+      if (data.days) days = data.days;
+      if (data.entries) entries = data.entries;
+      if (Array.isArray(data.acts)) acts = data.acts;
+      if (data.sel) sel = data.sel;
+      if (data.lang && I18N[data.lang]) { lang = data.lang; save(LS.lang, lang); }
+      if (typeof data.name === 'string') { displayName = data.name; save(LS.name, displayName); }
+      save(LS.days, days); save(LS.entries, entries); save(LS.acts, acts); save(LS.sel, sel);
+      renderLang();
+      refresh();
+      showToast(t('importOk'));
+    } catch {
+      showToast(t('importBad'));
+    }
+  };
+  reader.readAsText(file);
 }
 
 /* ================= Navigation / View ================= */
@@ -771,8 +1197,9 @@ function switchView(v) {
   $('#tab-analyse').classList.toggle('active', v === 'analyse');
   $('#log-view').classList.toggle('hidden', v !== 'log');
   $('#analyse-view').classList.toggle('hidden', v !== 'analyse');
-  $('#stampbar').classList.toggle('hidden', v !== 'log');
+  setStampbarVisible(v === 'log' && !!dayData());
   $('#range-toggle').classList.toggle('hidden', v !== 'analyse');
+  renderDayLabel();
   if (v === 'log') {
     scrollFlag = false;
     renderLog();
@@ -782,9 +1209,18 @@ function switchView(v) {
 }
 
 function renderDayLabel() {
+  if (view === 'analyse' && range === 'week') {
+    const ds = weekDays(viewDate);
+    $('#day-label').textContent = fmtRange(ds[0], ds[6]);
+    return;
+  }
   $('#day-label').textContent = key() === dstr(todayDate())
     ? t('today')
-    : viewDate.toLocaleDateString(LOCALES[lang] || 'de-DE', { weekday: 'short', day: 'numeric', month: 'short' });
+    : viewDate.toLocaleDateString(loc(), { weekday: 'short', day: 'numeric', month: 'short' });
+}
+
+function dateStep() {
+  return (view === 'analyse' && range === 'week') ? 7 : 1;
 }
 
 function refresh() {
@@ -804,6 +1240,7 @@ function todayDate() {
 }
 
 function renderLang() {
+  document.documentElement.lang = lang;
   $('#tab-log').textContent = t('log');
   $('#tab-analyse').textContent = t('analyse');
   document.querySelectorAll('#range-toggle button').forEach(b => {
@@ -820,10 +1257,20 @@ function renderLang() {
 
 function openSettings() {
   const seg = Object.keys(I18N).map(l =>
-    `<button data-lang="${l}" class="${l === lang ? 'active' : ''}">${l.toUpperCase()}</button>`).join('');
+    `<button type="button" data-lang="${l}" class="${l === lang ? 'active' : ''}">${l.toUpperCase()}</button>`).join('');
   showModal(t('settings'),
-    `<div class="settings-row"><span>${t('language')}</span><div class="seg lang-seg">${seg}</div></div>`,
-    [{ label: t('ok'), class: 'btn-primary' }]
+    `<div class="settings-row"><span>${t('yourName')}</span></div>` +
+    `<input type="text" id="set-name" maxlength="40" placeholder="${t('namePh')}" value="${esc(displayName)}">` +
+    `<div class="settings-row"><span>${t('language')}</span><div class="seg lang-seg">${seg}</div></div>` +
+    `<div class="modal-hint">${t('backup')}</div>` +
+    `<div class="settings-backup">` +
+      `<button type="button" id="btn-backup" class="btn-secondary">${t('exportJson')}</button>` +
+      `<button type="button" id="btn-import" class="btn-secondary">${t('importJson')}</button>` +
+    `</div>`,
+    [{ label: t('ok'), class: 'btn-primary', onClick: () => {
+      displayName = ($('#set-name')?.value || '').trim();
+      save(LS.name, displayName);
+    }}]
   );
   document.querySelectorAll('.lang-seg button').forEach(b =>
     b.addEventListener('click', () => {
@@ -835,6 +1282,14 @@ function openSettings() {
       renderLang();
       refresh();
     }));
+  $('#btn-backup').addEventListener('click', exportBackup);
+  $('#btn-import').addEventListener('click', () => {
+    const inp = document.createElement('input');
+    inp.type = 'file';
+    inp.accept = 'application/json,.json';
+    inp.addEventListener('change', () => { if (inp.files[0]) importBackupFile(inp.files[0]); });
+    inp.click();
+  });
 }
 
 function init() {
@@ -844,8 +1299,8 @@ function init() {
   $('#settings-btn').addEventListener('click', openSettings);
   $('#undo-btn').addEventListener('click', undo);
 
-  $('#prev-day').addEventListener('click', () => { viewDate.setDate(viewDate.getDate() - 1); scrollFlag = true; refresh(); });
-  $('#next-day').addEventListener('click', () => { viewDate.setDate(viewDate.getDate() + 1); scrollFlag = true; refresh(); });
+  $('#prev-day').addEventListener('click', () => { viewDate = addDays(viewDate, -dateStep()); scrollFlag = true; refresh(); });
+  $('#next-day').addEventListener('click', () => { viewDate = addDays(viewDate, dateStep()); scrollFlag = true; refresh(); });
   $('#day-label').addEventListener('click', () => { viewDate = todayDate(); scrollFlag = true; refresh(); });
   $('#now-btn').addEventListener('click', () => {
     viewDate = todayDate();
@@ -858,6 +1313,7 @@ function init() {
     b.addEventListener('click', () => {
       range = b.dataset.range;
       document.querySelectorAll('#range-toggle button').forEach(x => x.classList.toggle('active', x === b));
+      renderDayLabel();
       renderAnalysis();
     });
   });
@@ -874,6 +1330,7 @@ function init() {
   $('#new-activity-input').addEventListener('keydown', e => { if (e.key === 'Enter') addActivity(); });
 
   $('#modal-overlay').addEventListener('click', (e) => { if (e.target === $('#modal-overlay')) closeModal(); });
+  window.addEventListener('beforeprint', fillPrintReport);
 
   refresh();
 }
