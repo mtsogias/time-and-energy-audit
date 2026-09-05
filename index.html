@@ -44,7 +44,16 @@
   </main>
 
   <div id="stampbar" class="hidden">
-    <div id="activity-chips"></div>
+    <div class="act-picker" id="act-picker">
+      <button type="button" id="act-trigger" class="act-trigger" aria-haspopup="listbox" aria-expanded="false" aria-controls="act-menu">
+        <span id="act-trigger-label"></span>
+        <svg class="act-chevron" width="16" height="16" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+          <path d="M2.5 4.5L6 8L9.5 4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+      <button type="button" id="act-add" class="act-add">+</button>
+      <div id="act-menu" class="act-menu hidden" role="listbox"></div>
+    </div>
     <div id="new-activity-row" class="hidden">
       <input id="new-activity-input" type="text" placeholder="Neue Aktivitaet..." maxlength="30" autocomplete="off">
       <button id="add-activity-btn">OK</button>

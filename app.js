@@ -16,6 +16,7 @@ const I18N = {
     wakeHint: 'Dein Tag baut sich ab hier auf.', note: 'Notiz', delEntry: 'Eintrag löschen',
     shorter: 'Kürzer', longer: 'Länger', tapBlock: 'Block antippen',
     emptyBlock: 'Leerer Block \u2013 Chip wählen', newCat: '+ Neu', newAct: 'Neue Aktivität...',
+    pickAct: 'Aktivität wählen',
     ok: 'OK', rename: 'Umbenennen', delete: 'Löschen', notePh: 'Notiz zu dieser Aktivität...',
     renameHint: 'Bestehende Einträge mit dieser Aktivität werden automatisch umbenannt.',
     confirmDelChip: '"{name}" wirklich löschen?\nVorhandene Einträge behalten diese Aktivität (kursiv).',
@@ -47,6 +48,7 @@ const I18N = {
     wakeHint: 'Your day builds from here.', note: 'Note', delEntry: 'Delete entry',
     shorter: 'Shorter', longer: 'Longer', tapBlock: 'Tap a block',
     emptyBlock: 'Empty block \u2013 pick a chip', newCat: '+ New', newAct: 'New activity...',
+    pickAct: 'Pick activity',
     ok: 'OK', rename: 'Rename', delete: 'Delete', notePh: 'Note for this activity...',
     renameHint: 'Existing entries with this activity will be renamed automatically.',
     confirmDelChip: 'Delete "{name}"?\nExisting entries keep this activity (italic).',
@@ -78,6 +80,7 @@ const I18N = {
     wakeHint: 'Ta journee se construit ici.', note: 'Note', delEntry: 'Supprimer',
     shorter: 'Plus court', longer: 'Plus long', tapBlock: 'Toucher un bloc',
     emptyBlock: 'Bloc vide \u2013 choisir un chip', newCat: '+ Nouveau', newAct: 'Nouvelle activite...',
+    pickAct: 'Choisir une activite',
     ok: 'OK', rename: 'Renommer', delete: 'Supprimer', notePh: 'Note pour cette activite...',
     renameHint: 'Les entrees existantes seront renommees automatiquement.',
     confirmDelChip: 'Supprimer "{name}" ?\nLes entrees existantes gardent cette activite (italique).',
@@ -133,6 +136,7 @@ const valLabel = v => (t('valShort') && t('valShort')[v]) || (v ? '$'.repeat(v) 
 function setStampbarVisible(on) {
   $('#stampbar').classList.toggle('hidden', !on);
   document.body.classList.toggle('no-stamp', !on);
+  if (!on) closeActMenu();
 }
 
 /* ================= Undo ================= */
@@ -600,21 +604,50 @@ function touchAct(name) {
   save(LS.acts, acts);
 }
 
+function actMenuOpen() {
+  return !$('#act-menu').classList.contains('hidden');
+}
+
+function setActMenu(open) {
+  $('#act-menu').classList.toggle('hidden', !open);
+  $('#act-picker').classList.toggle('open', open);
+  $('#act-trigger').setAttribute('aria-expanded', open ? 'true' : 'false');
+  if (open) {
+    const menu = $('#act-menu');
+    const selItem = menu.querySelector('.act-item.sel');
+    if (selItem) {
+      const top = selItem.offsetTop - menu.clientHeight / 2 + selItem.clientHeight / 2;
+      menu.scrollTop = Math.max(0, top);
+    }
+  }
+}
+
+function closeActMenu() { setActMenu(false); }
+
+function toggleActMenu() { setActMenu(!actMenuOpen()); }
+
 function renderChips() {
-  const w = $('#activity-chips');
+  const label = $('#act-trigger-label');
+  if (sel.activity) {
+    label.textContent = sel.activity;
+    label.classList.remove('placeholder');
+  } else {
+    label.textContent = t('pickAct');
+    label.classList.add('placeholder');
+  }
+
+  const w = $('#act-menu');
   w.innerHTML = '';
   acts.forEach(a => {
     const c = document.createElement('button');
-    c.className = 'chip' + (a === sel.activity ? ' sel' : '');
+    c.type = 'button';
+    c.className = 'act-item' + (a === sel.activity ? ' sel' : '');
+    c.setAttribute('role', 'option');
+    c.setAttribute('aria-selected', a === sel.activity ? 'true' : 'false');
     c.textContent = a;
     attachChip(c, a);
     w.appendChild(c);
   });
-  const p = document.createElement('button');
-  p.className = 'chip plus';
-  p.textContent = t('newCat');
-  p.addEventListener('click', openNewActivity);
-  w.appendChild(p);
 }
 
 let suppressClick = false;
@@ -648,11 +681,13 @@ function attachChip(el, name) {
 function selectChip(name) {
   sel.activity = name;
   save(LS.sel, sel);
+  closeActMenu();
   renderChips();
   applyToActive();
 }
 
 function askDeleteChip(name) {
+  closeActMenu();
   showModal(name,
     `<input type="text" id="chip-rename" value="${esc(name)}" maxlength="30">
      <div class="modal-hint">${t('renameHint')}</div>`,
@@ -700,6 +735,7 @@ function removeChip(name) {
 }
 
 function openNewActivity() {
+  closeActMenu();
   $('#new-activity-row').classList.remove('hidden');
   $('#new-activity-input').focus();
 }
@@ -1253,6 +1289,8 @@ function renderLang() {
   $('#dur-plus').setAttribute('aria-label', t('longer'));
   $('#settings-btn').setAttribute('aria-label', t('settings'));
   $('#undo-btn').setAttribute('aria-label', t('undo'));
+  $('#act-trigger').setAttribute('aria-label', t('pickAct'));
+  $('#act-add').setAttribute('aria-label', t('newCat'));
 }
 
 function openSettings() {
@@ -1325,6 +1363,17 @@ function init() {
 
   $('#dur-minus').addEventListener('click', shrink);
   $('#dur-plus').addEventListener('click', grow);
+
+  $('#act-trigger').addEventListener('click', toggleActMenu);
+  $('#act-add').addEventListener('click', openNewActivity);
+  document.addEventListener('pointerdown', (e) => {
+    const picker = $('#act-picker');
+    if (!picker || !actMenuOpen()) return;
+    if (!picker.contains(e.target)) closeActMenu();
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && actMenuOpen()) closeActMenu();
+  });
 
   $('#add-activity-btn').addEventListener('click', addActivity);
   $('#new-activity-input').addEventListener('keydown', e => { if (e.key === 'Enter') addActivity(); });
