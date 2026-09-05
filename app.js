@@ -608,29 +608,12 @@ function actMenuOpen() {
   return !$('#act-menu').classList.contains('hidden');
 }
 
-let pageScrollLock = null;
-function lockPageScroll(on) {
-  if (on) {
-    if (pageScrollLock != null) return;
-    pageScrollLock = window.scrollY;
-    document.body.style.top = `-${pageScrollLock}px`;
-    document.body.classList.add('act-menu-open');
-  } else {
-    if (pageScrollLock == null) return;
-    document.body.classList.remove('act-menu-open');
-    document.body.style.top = '';
-    const y = pageScrollLock;
-    pageScrollLock = null;
-    window.scrollTo(0, y);
-  }
-}
-
 function setActMenu(open) {
+  const y = window.scrollY;
   $('#act-menu').classList.toggle('hidden', !open);
   $('#act-picker').classList.toggle('open', open);
   $('#act-backdrop').classList.toggle('hidden', !open);
   $('#act-trigger').setAttribute('aria-expanded', open ? 'true' : 'false');
-  lockPageScroll(open);
   if (open) {
     const menu = $('#act-menu');
     const selItem = menu.querySelector('.act-item.sel');
@@ -639,6 +622,7 @@ function setActMenu(open) {
       menu.scrollTop = Math.max(0, top);
     }
   }
+  if (window.scrollY !== y) window.scrollTo(0, y);
 }
 
 function closeActMenu() { setActMenu(false); }

@@ -32,13 +32,6 @@ body {
   -webkit-user-select: none;
   -webkit-font-smoothing: antialiased;
 }
-body.act-menu-open {
-  position: fixed;
-  left: 0;
-  right: 0;
-  width: 100%;
-  overflow: hidden;
-}
 input { user-select: text; }
 button { font: inherit; color: inherit; background: none; border: none; cursor: pointer; padding: 0; }
 .hidden { display: none !important; }
@@ -238,6 +231,7 @@ body.no-stamp #log-view { padding-bottom: 48px; }
   border-top: 1px solid var(--line);
   padding: 12px 14px calc(12px + env(safe-area-inset-bottom));
   display: flex; flex-direction: column; gap: 9px;
+  overflow: visible;
 }
 
 .act-picker { position: relative; display: flex; gap: 6px; align-items: stretch; }
