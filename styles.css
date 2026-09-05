@@ -32,6 +32,13 @@ body {
   -webkit-user-select: none;
   -webkit-font-smoothing: antialiased;
 }
+body.act-menu-open {
+  position: fixed;
+  left: 0;
+  right: 0;
+  width: 100%;
+  overflow: hidden;
+}
 input { user-select: text; }
 button { font: inherit; color: inherit; background: none; border: none; cursor: pointer; padding: 0; }
 .hidden { display: none !important; }
@@ -257,11 +264,17 @@ body.no-stamp #log-view { padding-bottom: 48px; }
   transition: border-color .15s, color .15s;
 }
 .act-add:active { border-color: var(--amber); color: var(--amber); }
+.act-backdrop {
+  position: fixed; inset: 0; z-index: 19;
+  background: rgba(0, 0, 0, 0.4);
+  touch-action: none;
+}
 .act-menu {
   position: absolute; left: 0; right: 0; bottom: calc(100% + 8px); z-index: 21;
   background: var(--card); border: 1px solid var(--line); border-radius: 12px;
-  padding: 6px; max-height: min(56vh, 480px); overflow-y: auto;
-  overscroll-behavior: contain; -webkit-overflow-scrolling: touch;
+  padding: 6px; max-height: min(40vh, 320px);
+  overflow-y: scroll; overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch; touch-action: pan-y;
   box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.45);
   scrollbar-width: thin; scrollbar-color: var(--line) transparent;
 }
@@ -269,7 +282,7 @@ body.no-stamp #log-view { padding-bottom: 48px; }
   display: block; width: 100%; text-align: left;
   padding: 10px 12px; border-radius: 8px;
   color: var(--text); font-weight: 500; font-size: 14px;
-  -webkit-touch-callout: none;
+  -webkit-touch-callout: none; touch-action: pan-y; cursor: pointer;
   transition: background .12s, color .12s;
 }
 .act-item:active { background: var(--card-2); }

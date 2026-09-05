@@ -608,10 +608,29 @@ function actMenuOpen() {
   return !$('#act-menu').classList.contains('hidden');
 }
 
+let pageScrollLock = null;
+function lockPageScroll(on) {
+  if (on) {
+    if (pageScrollLock != null) return;
+    pageScrollLock = window.scrollY;
+    document.body.style.top = `-${pageScrollLock}px`;
+    document.body.classList.add('act-menu-open');
+  } else {
+    if (pageScrollLock == null) return;
+    document.body.classList.remove('act-menu-open');
+    document.body.style.top = '';
+    const y = pageScrollLock;
+    pageScrollLock = null;
+    window.scrollTo(0, y);
+  }
+}
+
 function setActMenu(open) {
   $('#act-menu').classList.toggle('hidden', !open);
   $('#act-picker').classList.toggle('open', open);
+  $('#act-backdrop').classList.toggle('hidden', !open);
   $('#act-trigger').setAttribute('aria-expanded', open ? 'true' : 'false');
+  lockPageScroll(open);
   if (open) {
     const menu = $('#act-menu');
     const selItem = menu.querySelector('.act-item.sel');
@@ -638,12 +657,13 @@ function renderChips() {
 
   const w = $('#act-menu');
   w.innerHTML = '';
-  acts.forEach(a => {
-    const c = document.createElement('button');
-    c.type = 'button';
+  const listed = acts.slice().sort((a, b) => a.localeCompare(b, loc(), { sensitivity: 'base' }));
+  listed.forEach(a => {
+    const c = document.createElement('div');
     c.className = 'act-item' + (a === sel.activity ? ' sel' : '');
     c.setAttribute('role', 'option');
     c.setAttribute('aria-selected', a === sel.activity ? 'true' : 'false');
+    c.tabIndex = 0;
     c.textContent = a;
     attachChip(c, a);
     w.appendChild(c);
@@ -675,6 +695,12 @@ function attachChip(el, name) {
   el.addEventListener('click', () => {
     if (suppressClick) { suppressClick = false; return; }
     selectChip(name);
+  });
+  el.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      if (!suppressClick) selectChip(name);
+    }
   });
 }
 
@@ -1374,6 +1400,22 @@ function init() {
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && actMenuOpen()) closeActMenu();
   });
+  const stopBgScroll = (e) => {
+    if (!actMenuOpen()) return;
+    const menu = $('#act-menu');
+    if (menu.contains(e.target)) {
+      if (menu.scrollHeight <= menu.clientHeight + 1) e.preventDefault();
+      else if (e.type === 'wheel') {
+        const atTop = menu.scrollTop <= 0 && e.deltaY < 0;
+        const atBottom = menu.scrollTop + menu.clientHeight >= menu.scrollHeight - 1 && e.deltaY > 0;
+        if (atTop || atBottom) e.preventDefault();
+      }
+      return;
+    }
+    e.preventDefault();
+  };
+  document.addEventListener('touchmove', stopBgScroll, { passive: false });
+  document.addEventListener('wheel', stopBgScroll, { passive: false });
 
   $('#add-activity-btn').addEventListener('click', addActivity);
   $('#new-activity-input').addEventListener('keydown', e => { if (e.key === 'Enter') addActivity(); });
