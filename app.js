@@ -553,19 +553,19 @@ function editNote(id) {
   showModal(t('note'),
     `<textarea id="note-input" placeholder="${t('notePh')}">${esc(e.note || '')}</textarea>`,
     [
-      { label: t('save'), class: 'btn-primary', onClick: (body) => {
-        pushUndo();
-        e.note = body.querySelector('#note-input').value.trim();
-        save(LS.entries, entries);
-        renderLog();
-      }},
+      { label: t('cancel'), class: 'btn-secondary' },
       { label: t('delete'), class: 'btn-danger', onClick: () => {
         pushUndo();
         e.note = '';
         save(LS.entries, entries);
         renderLog();
       }},
-      { label: t('cancel'), class: 'btn-secondary' },
+      { label: t('save'), class: 'btn-primary', onClick: (body) => {
+        pushUndo();
+        e.note = body.querySelector('#note-input').value.trim();
+        save(LS.entries, entries);
+        renderLog();
+      }},
     ]
   );
   setTimeout(() => $('#note-input').focus(), 50);
