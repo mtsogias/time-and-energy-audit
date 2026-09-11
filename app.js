@@ -600,7 +600,7 @@ function closeModal() {
 
 /* ================= Chips / Stamp-Bar ================= */
 function touchAct(name) {
-  acts = [name, ...acts.filter(a => a !== name)].slice(0, 12);
+  acts = [name, ...acts.filter(a => a !== name)];
   save(LS.acts, acts);
 }
 
