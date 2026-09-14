@@ -47,7 +47,7 @@ button { font: inherit; color: inherit; background: none; border: none; cursor: 
   padding-top: calc(10px + env(safe-area-inset-top));
   display: flex; flex-direction: column; gap: 10px;
 }
-.topbar-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.topbar-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
 
 .tabs { display: flex; gap: 2px; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 3px; }
 .tab {
@@ -78,9 +78,10 @@ button { font: inherit; color: inherit; background: none; border: none; cursor: 
 .daylabel {
   font-weight: 600; min-width: 148px; text-align: center;
   padding: 6px 10px; color: var(--text); font-size: 13px;
-  border-radius: 6px; transition: background .15s;
+  border-radius: 6px; transition: background .15s, color .15s;
 }
 .daylabel:active { background: var(--card); }
+.daylabel.pick-range { color: var(--amber); }
 
 .nowbtn {
   display: flex; align-items: center; gap: 7px;
@@ -102,6 +103,8 @@ button { font: inherit; color: inherit; background: none; border: none; cursor: 
   transition: background .15s, color .15s;
 }
 .seg button.active { background: var(--card-2); color: var(--text); }
+#range-toggle { flex: 0 1 auto; min-width: 0; }
+#range-toggle button { padding: 6px 8px; }
 
 /* ---------- Timeline ---------- */
 #log-view { padding: 4px 12px 240px; }
@@ -375,12 +378,17 @@ body.no-stamp #log-view { padding-bottom: 48px; }
 }
 #modal-title { font-size: 15px; font-weight: 600; color: var(--text); }
 #modal-body { display: flex; flex-direction: column; gap: 10px; }
-#modal-body input[type=text], #modal-body textarea {
+#modal-body input[type=text], #modal-body input[type=date], #modal-body textarea {
   background: var(--bg); border: 1px solid var(--line); border-radius: 8px;
   padding: 10px 12px; color: var(--text); font: inherit; font-size: 14px;
   width: 100%; resize: none; -webkit-user-select: text; user-select: text;
+  color-scheme: dark;
 }
-#modal-body input[type=text]:focus, #modal-body textarea:focus { outline: none; border-color: var(--amber); }
+#modal-body input[type=text]:focus, #modal-body input[type=date]:focus, #modal-body textarea:focus { outline: none; border-color: var(--amber); }
+.range-field {
+  display: flex; flex-direction: column; gap: 6px;
+  font-size: 12px; color: var(--muted); font-weight: 600;
+}
 #modal-body textarea { min-height: 60px; }
 #modal-actions { display: flex; gap: 8px; }
 #modal-actions button {

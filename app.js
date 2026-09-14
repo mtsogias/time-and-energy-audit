@@ -28,7 +28,10 @@ const I18N = {
     energyBal: 'Energie-Bilanz', gives: 'Gibt', drains: 'Zieht', neutralLbl: 'Neutral',
     wakeTime: 'Aufwachzeit', avgLast: '\u00D8 der letzten {n} Tage',
     settings: 'Einstellungen', language: 'Sprache', undo: 'Rückgängig',
-    share: 'Teilen', pdf: 'PDF', csv: 'CSV', copied: 'Kopiert',
+    pdf: 'PDF', csv: 'CSV',
+    custom: 'Zeitraum', rangeFrom: 'Von', rangeTo: 'Bis',
+    daysOverview: 'Tage im Überblick',
+    rangeHint: 'Von und Bis inklusive, maximal 90 Tage.',
     weekOverview: 'Woche im Überblick', noLog: 'kein Log',
     loggedDays: '{done} von {total} Tagen geloggt', weekNeedleHint: 'Pro Tag: Aufwachzeit \u00B7 Zeit \u00B7 Needle-%',
     logged: 'Geloggt',
@@ -37,7 +40,7 @@ const I18N = {
     exportJson: 'Backup herunterladen', importJson: 'Backup einspielen',
     importOk: 'Backup eingespielt', importBad: 'Datei konnte nicht gelesen werden',
     confirmImport: 'Aktuelle Daten auf diesem Gerät werden ersetzt. Fortfahren?',
-    shareFailed: 'Teilen nicht möglich', daysWord: 'Tage',
+    daysWord: 'Tage',
     timeline: 'Ablauf', topAct: 'Top',
     valShort: { 0: '–', 1: '$', 2: '$$', 3: '$$$' },
   },
@@ -60,7 +63,10 @@ const I18N = {
     energyBal: 'Energy Balance', gives: 'Gives', drains: 'Drains', neutralLbl: 'Neutral',
     wakeTime: 'Wake time', avgLast: 'Avg of last {n} days',
     settings: 'Settings', language: 'Language', undo: 'Undo',
-    share: 'Share', pdf: 'PDF', csv: 'CSV', copied: 'Copied',
+    pdf: 'PDF', csv: 'CSV',
+    custom: 'Range', rangeFrom: 'From', rangeTo: 'To',
+    daysOverview: 'Days at a glance',
+    rangeHint: 'From and to are inclusive, 90 days max.',
     weekOverview: 'Week at a glance', noLog: 'no log',
     loggedDays: '{done} of {total} days logged', weekNeedleHint: 'Per day: wake \u00B7 time \u00B7 needle %',
     logged: 'Logged',
@@ -69,7 +75,7 @@ const I18N = {
     exportJson: 'Download backup', importJson: 'Restore backup',
     importOk: 'Backup restored', importBad: 'Could not read that file',
     confirmImport: 'This will replace the data on this device. Continue?',
-    shareFailed: 'Sharing not available', daysWord: 'days',
+    daysWord: 'days',
     timeline: 'Timeline', topAct: 'Top',
     valShort: { 0: '–', 1: '$', 2: '$$', 3: '$$$' },
   },
@@ -92,7 +98,10 @@ const I18N = {
     energyBal: 'Bilan d\'energie', gives: 'Donne', drains: 'Pompe', neutralLbl: 'Neutre',
     wakeTime: 'Heure de reveil', avgLast: 'Moy. des {n} derniers jours',
     settings: 'Reglages', language: 'Langue', undo: 'Annuler',
-    share: 'Partager', pdf: 'PDF', csv: 'CSV', copied: 'Copie',
+    pdf: 'PDF', csv: 'CSV',
+    custom: 'Periode', rangeFrom: 'Du', rangeTo: 'Au',
+    daysOverview: 'Jours en un coup d\'oeil',
+    rangeHint: 'Du et au inclus, 90 jours max.',
     weekOverview: 'Semaine en un coup d\'oeil', noLog: 'pas de journal',
     loggedDays: '{done} jours sur {total}', weekNeedleHint: 'Par jour : reveil \u00B7 temps \u00B7 needle %',
     logged: 'Journalise',
@@ -101,7 +110,7 @@ const I18N = {
     exportJson: 'Telecharger la sauvegarde', importJson: 'Restaurer',
     importOk: 'Sauvegarde restauree', importBad: 'Fichier illisible',
     confirmImport: 'Les donnees de cet appareil seront remplacees. Continuer ?',
-    shareFailed: 'Partage indisponible', daysWord: 'jours',
+    daysWord: 'jours',
     timeline: 'Deroule', topAct: 'Top',
     valShort: { 0: '–', 1: '$', 2: '$$', 3: '$$$' },
   },
@@ -124,6 +133,13 @@ const loc = () => LOCALES[lang] || 'de-DE';
 const addDays = (d, n) => { const x = new Date(d.getFullYear(), d.getMonth(), d.getDate()); x.setDate(x.getDate() + n); return x; };
 const startOfWeek = d => addDays(d, -((d.getDay() + 6) % 7)); // Montag
 const weekDays = d => { const mon = startOfWeek(d); return Array.from({ length: 7 }, (_, i) => addDays(mon, i)); };
+const parseKey = k => {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(k || '');
+  if (!m) return null;
+  const d = new Date(+m[1], +m[2] - 1, +m[3]);
+  return dstr(d) === k ? d : null;
+};
+const daysBetween = (a, b) => Math.round((addDays(b, 0) - addDays(a, 0)) / 86400000);
 const fmtRange = (a, b) => {
   const sameYear = a.getFullYear() === b.getFullYear();
   const opt = { day: 'numeric', month: 'short', year: sameYear ? undefined : 'numeric' };
@@ -171,6 +187,7 @@ const DEFAULT_ACTS = {
 const defaultActs = () => DEFAULT_ACTS[lang] || DEFAULT_ACTS.de;
 const DEFAULT_SPAN = 18;
 const RASTER = 30; // Minuten, fest
+const MAX_CUSTOM_DAYS = 90;
 
 let days = load(LS.days, {});
 let entries = load(LS.entries, {});
@@ -180,7 +197,9 @@ let displayName = load(LS.name, '');
 let viewDate = new Date();
 if (viewDate.getHours() < 5) viewDate.setDate(viewDate.getDate() - 1); // Nacht gehoert zum Vortag
 let view = 'log';
-let range = 'day';
+let range = 'day'; // 'day' | 'week' | 'custom'
+let customFrom = null;
+let customTo = null;
 let activeStart = null; // aktuell ausgewaehlter Block-Start (Minuten) oder null
 let scrollFlag = true;  // beim naechsten Render zum Jetzt-Block scrollen
 let undoStack = [];     // Snapshots von {days, entries} fuer Rueckgaengig
@@ -792,9 +811,58 @@ function renderDur() {
 }
 
 /* ================= Analyse ================= */
+function ensureCustomRange() {
+  if (customFrom && customTo) return;
+  const week = weekDays(viewDate);
+  customFrom = week[0];
+  customTo = week[6];
+}
+
+function applyCustomRange(fromStr, toStr) {
+  let from = parseKey(fromStr);
+  let to = parseKey(toStr);
+  if (!from || !to) return false;
+  if (to < from) { const tmp = from; from = to; to = tmp; }
+  if (daysBetween(from, to) + 1 > MAX_CUSTOM_DAYS) to = addDays(from, MAX_CUSTOM_DAYS - 1);
+  customFrom = from;
+  customTo = to;
+  viewDate = to;
+  return true;
+}
+
+function datesInRange(from, to) {
+  const n = Math.max(0, daysBetween(from, to));
+  return Array.from({ length: n + 1 }, (_, i) => addDays(from, i));
+}
+
 function periodDates() {
   if (range === 'week') return weekDays(viewDate);
+  if (range === 'custom') {
+    ensureCustomRange();
+    return datesInRange(customFrom, customTo);
+  }
   return [new Date(viewDate.getFullYear(), viewDate.getMonth(), viewDate.getDate())];
+}
+
+function openCustomRangeModal() {
+  ensureCustomRange();
+  showModal(t('custom'),
+    `<label class="range-field">${esc(t('rangeFrom'))}` +
+      `<input type="date" id="range-from" value="${dstr(customFrom)}">` +
+    `</label>` +
+    `<label class="range-field">${esc(t('rangeTo'))}` +
+      `<input type="date" id="range-to" value="${dstr(customTo)}">` +
+    `</label>` +
+    `<div class="modal-hint">${esc(t('rangeHint'))}</div>`,
+    [
+      { label: t('cancel'), class: 'btn-secondary' },
+      { label: t('ok'), class: 'btn-primary', onClick: () => {
+        applyCustomRange($('#range-from')?.value, $('#range-to')?.value);
+        renderDayLabel();
+        if (view === 'analyse') renderAnalysis();
+      }},
+    ]
+  );
 }
 
 function collect() {
@@ -858,13 +926,11 @@ function renderExportBar() {
   const bar = document.createElement('div');
   bar.className = 'export-bar';
   bar.innerHTML =
-    `<button class="primary" data-ex="share">${t('share')}</button>` +
-    `<button data-ex="pdf">${t('pdf')}</button>` +
+    `<button class="primary" data-ex="pdf">${t('pdf')}</button>` +
     `<button data-ex="csv">${t('csv')}</button>`;
   bar.addEventListener('click', ev => {
     const btn = ev.target.closest('button');
     if (!btn) return;
-    if (btn.dataset.ex === 'share') shareReport();
     if (btn.dataset.ex === 'pdf') exportPDF();
     if (btn.dataset.ex === 'csv') exportCSV();
   });
@@ -899,7 +965,7 @@ function renderWeekStrip(box, bundles) {
   }).join('');
 
   const wrap = card(
-    t('weekOverview'),
+    range === 'week' ? t('weekOverview') : t('daysOverview'),
     `<div class="hint" style="margin:0 0 10px">${t('loggedDays', { done: logged, total: bundles.length })} \u00B7 ${t('weekNeedleHint')}</div>` +
     `<div class="week-days">${rows}</div>`
   );
@@ -925,7 +991,7 @@ function renderAnalysis() {
 
   if (list.length) box.appendChild(renderExportBar());
 
-  if (range === 'week') renderWeekStrip(box, bundles);
+  if (range !== 'day') renderWeekStrip(box, bundles);
 
   if (!list.length) {
     box.insertAdjacentHTML('beforeend', `<div class="card"><p class="hint">${t('noEntries')}</p></div>`);
@@ -1007,7 +1073,7 @@ function reportInnerHTML(model) {
     `</div>`;
 
   if (bundles.length > 1) {
-    html += `<h2>${esc(t('weekOverview'))} \u00B7 ${esc(t('loggedDays', { done: loggedN, total: bundles.length }))}</h2>` +
+    html += `<h2>${esc(range === 'week' ? t('weekOverview') : t('daysOverview'))} \u00B7 ${esc(t('loggedDays', { done: loggedN, total: bundles.length }))}</h2>` +
       `<table><thead><tr><th></th><th>${esc(t('wakeTime'))}</th><th>${esc(t('logged'))}</th><th>$$$</th><th>${esc(t('gives'))}</th><th>${esc(t('drains'))}</th><th>${esc(t('topAct'))}</th></tr></thead><tbody>` +
       bundles.map(b => {
         if (!b.started && !b.list.length) {
@@ -1063,95 +1129,8 @@ function reportInnerHTML(model) {
   return html;
 }
 
-const REPORT_CSS = `body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#18181b;max-width:720px;margin:0 auto;padding:24px;line-height:1.45}
-h1{font-size:20px;margin:0 0 4px}
-.sub{color:#52525b;margin:0 0 18px;font-size:13px}
-h2{font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:#71717a;margin:22px 0 8px;font-weight:700}
-.kpis{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.kpi{border:1px solid #e4e4e7;border-radius:8px;padding:10px;background:#fafafa}
-.kpi-n{font-size:20px;font-weight:700;font-family:ui-monospace,Menlo,monospace}
-.kpi-l{font-size:9px;color:#71717a;text-transform:uppercase;letter-spacing:.08em;margin-top:4px}
-.amber{color:#b45309;font-weight:700}
-.pos{color:#047857}
-.neg{color:#b91c1c}
-.muted{color:#71717a}
-table{width:100%;border-collapse:collapse;font-size:13px}
-th,td{padding:5px 6px;border-bottom:1px solid #e4e4e7;text-align:left;vertical-align:top}
-.day-h{margin-top:16px;font-size:14px;font-weight:700}
-.note{color:#52525b;font-style:italic}
-@media (min-width:560px){.kpis{grid-template-columns:1fr 1fr 1fr 1fr}}`;
-
-function buildReportHTML() {
-  const model = buildReportModel();
-  return `<!DOCTYPE html><html lang="${lang}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(model.meta.title)}</title><style>${REPORT_CSS}</style></head><body>${reportInnerHTML(model)}</body></html>`;
-}
-
-function buildReportText() {
-  const { meta, bundles, list, stats: s, name } = buildReportModel();
-  const lines = [t('reportTitle'), name, meta.label, ''].filter(x => x != null && x !== '');
-  lines.push(`${t('needleMover')}: ${s.needlePct == null ? '–' : s.needlePct + '%'}`);
-  lines.push(`${t('needleTime', { needle: fmtDur(s.needle), rated: fmtDur(s.rated) })}`);
-  lines.push(`${t('gives')} ${fmtDur(s.green)} \u00B7 ${t('drains')} ${fmtDur(s.red)}`);
-  lines.push(`${t('logged')}: ${fmtDur(s.total)}`);
-  lines.push('');
-  if (bundles.length > 1) {
-    bundles.forEach(b => {
-      const label = `${weekdayShort(b.date)} ${dayNum(b.date)}`;
-      if (!b.started && !b.list.length) { lines.push(`${label}  ${t('noLog')}`); return; }
-      const st = b.stats;
-      lines.push(`${label}  ${b.wake != null ? fmtT(b.wake) : '–'}  ${st.total ? fmtDur(st.total) : '–'}  $$$ ${st.needlePct == null ? '–' : st.needlePct + '%'}`);
-    });
-    lines.push('');
-  }
-  if (list.length) {
-    lines.push(`— ${t('timePerAct')} —`);
-    Object.entries(s.byAct).sort((a, b) => b[1].min - a[1].min)
-      .forEach(([n, a]) => lines.push(`${n}  ${fmtDur(a.min)}`));
-    lines.push('');
-    bundles.forEach(b => {
-      if (!b.list.length) return;
-      lines.push(`— ${weekdayShort(b.date)} ${dayNum(b.date)}${b.wake != null ? ' \u00B7 ' + fmtT(b.wake) : ''} —`);
-      [...b.list].sort((a, c) => a.start - c.start).forEach(e => {
-        lines.push(`${fmtT(e.start)}-${fmtT(e.start + e.dur)}  ${e.activity}  ${valLabel(e.value)}  ${energyWord(e.energy)}`);
-        if (e.note) lines.push(`  ${e.note}`);
-      });
-      lines.push('');
-    });
-  }
-  return lines.join('\n').trim();
-}
-
 function fillPrintReport() {
   $('#print-report').innerHTML = reportInnerHTML(buildReportModel());
-}
-
-async function shareReport() {
-  const model = buildReportModel();
-  const title = model.meta.title;
-  const text = buildReportText();
-  try {
-    const file = new File([buildReportHTML()], `${model.meta.filename}.html`, { type: 'text/html' });
-    if (navigator.canShare && navigator.canShare({ files: [file] })) {
-      await navigator.share({ files: [file], title, text });
-      return;
-    }
-  } catch (e) {
-    if (e.name === 'AbortError') return;
-  }
-  try {
-    if (navigator.share) {
-      await navigator.share({ title, text });
-      return;
-    }
-  } catch (e) {
-    if (e.name === 'AbortError') return;
-  }
-  try {
-    await navigator.clipboard.writeText(text);
-    showToast(t('copied'));
-  } catch {
-    showToast(t('shareFailed'));
-  }
 }
 
 function exportPDF() {
@@ -1255,18 +1234,43 @@ function switchView(v) {
 }
 
 function renderDayLabel() {
+  const label = $('#day-label');
+  label.classList.toggle('pick-range', view === 'analyse' && range === 'custom');
   if (view === 'analyse' && range === 'week') {
     const ds = weekDays(viewDate);
-    $('#day-label').textContent = fmtRange(ds[0], ds[6]);
+    label.textContent = fmtRange(ds[0], ds[6]);
     return;
   }
-  $('#day-label').textContent = key() === dstr(todayDate())
+  if (view === 'analyse' && range === 'custom') {
+    ensureCustomRange();
+    label.textContent = fmtRange(customFrom, customTo);
+    return;
+  }
+  label.textContent = key() === dstr(todayDate())
     ? t('today')
     : viewDate.toLocaleDateString(loc(), { weekday: 'short', day: 'numeric', month: 'short' });
 }
 
 function dateStep() {
-  return (view === 'analyse' && range === 'week') ? 7 : 1;
+  if (view !== 'analyse') return 1;
+  if (range === 'week') return 7;
+  if (range === 'custom') {
+    ensureCustomRange();
+    return Math.max(1, daysBetween(customFrom, customTo) + 1);
+  }
+  return 1;
+}
+
+function shiftViewDate(dir) {
+  const step = dateStep();
+  if (view === 'analyse' && range === 'custom') {
+    ensureCustomRange();
+    customFrom = addDays(customFrom, dir * step);
+    customTo = addDays(customTo, dir * step);
+    viewDate = customTo;
+    return;
+  }
+  viewDate = addDays(viewDate, dir * step);
 }
 
 function refresh() {
@@ -1290,7 +1294,7 @@ function renderLang() {
   $('#tab-log').textContent = t('log');
   $('#tab-analyse').textContent = t('analyse');
   document.querySelectorAll('#range-toggle button').forEach(b => {
-    b.textContent = b.dataset.range === 'day' ? t('day') : t('week');
+    b.textContent = t(b.dataset.range === 'custom' ? 'custom' : b.dataset.range);
   });
   $('#now-text').textContent = t('now');
   $('#new-activity-input').placeholder = t('newAct');
@@ -1347,9 +1351,17 @@ function init() {
   $('#settings-btn').addEventListener('click', openSettings);
   $('#undo-btn').addEventListener('click', undo);
 
-  $('#prev-day').addEventListener('click', () => { viewDate = addDays(viewDate, -dateStep()); scrollFlag = true; refresh(); });
-  $('#next-day').addEventListener('click', () => { viewDate = addDays(viewDate, dateStep()); scrollFlag = true; refresh(); });
-  $('#day-label').addEventListener('click', () => { viewDate = todayDate(); scrollFlag = true; refresh(); });
+  $('#prev-day').addEventListener('click', () => { shiftViewDate(-1); scrollFlag = true; refresh(); });
+  $('#next-day').addEventListener('click', () => { shiftViewDate(1); scrollFlag = true; refresh(); });
+  $('#day-label').addEventListener('click', () => {
+    if (view === 'analyse' && range === 'custom') {
+      openCustomRangeModal();
+      return;
+    }
+    viewDate = todayDate();
+    scrollFlag = true;
+    refresh();
+  });
   $('#now-btn').addEventListener('click', () => {
     viewDate = todayDate();
     scrollFlag = true;
@@ -1361,8 +1373,10 @@ function init() {
     b.addEventListener('click', () => {
       range = b.dataset.range;
       document.querySelectorAll('#range-toggle button').forEach(x => x.classList.toggle('active', x === b));
+      if (range === 'custom') ensureCustomRange();
       renderDayLabel();
       renderAnalysis();
+      if (range === 'custom') openCustomRangeModal();
     });
   });
 
