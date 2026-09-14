@@ -1063,18 +1063,21 @@ function reportInnerHTML(model) {
   const avgWake = wakes.length ? Math.round(wakes.reduce((a, b) => a + b, 0) / wakes.length) : null;
   const loggedN = bundles.filter(b => b.started || b.list.length).length;
 
-  let html = `<h1>${esc(t('reportTitle'))}</h1>` +
+  let html = `<section class="report-section report-hero">` +
+    `<h1>${esc(t('reportTitle'))}</h1>` +
     `<div class="sub">${name ? esc(name) + ' \u00B7 ' : ''}${esc(meta.label)}</div>` +
     `<div class="kpis">` +
       `<div class="kpi"><div class="kpi-n amber">${s.needlePct == null ? '\u2013' : s.needlePct + '%'}</div><div class="kpi-l">${esc(t('needleMover'))}</div></div>` +
       `<div class="kpi"><div class="kpi-n">${esc(fmtDur(s.total))}</div><div class="kpi-l">${esc(t('logged'))}</div></div>` +
       `<div class="kpi"><div class="kpi-n">${esc(fmtDur(s.green))} / ${esc(fmtDur(s.red))}</div><div class="kpi-l">${esc(t('gives'))} / ${esc(t('drains'))}</div></div>` +
       `<div class="kpi"><div class="kpi-n">${avgWake != null ? fmtT(avgWake) : '\u2013'}</div><div class="kpi-l">${esc(t('wakeTime'))}</div></div>` +
-    `</div>`;
+    `</div>` +
+  `</section>`;
 
   if (bundles.length > 1) {
-    html += `<h2>${esc(range === 'week' ? t('weekOverview') : t('daysOverview'))} \u00B7 ${esc(t('loggedDays', { done: loggedN, total: bundles.length }))}</h2>` +
-      `<table><thead><tr><th></th><th>${esc(t('wakeTime'))}</th><th>${esc(t('logged'))}</th><th>$$$</th><th>${esc(t('gives'))}</th><th>${esc(t('drains'))}</th><th>${esc(t('topAct'))}</th></tr></thead><tbody>` +
+    html += `<section class="report-section">` +
+      `<h2>${esc(range === 'week' ? t('weekOverview') : t('daysOverview'))} \u00B7 ${esc(t('loggedDays', { done: loggedN, total: bundles.length }))}</h2>` +
+      `<table class="overview"><thead><tr><th></th><th>${esc(t('wakeTime'))}</th><th>${esc(t('logged'))}</th><th>$$$</th><th>${esc(t('gives'))}</th><th>${esc(t('drains'))}</th><th>${esc(t('topAct'))}</th></tr></thead><tbody>` +
       bundles.map(b => {
         if (!b.started && !b.list.length) {
           return `<tr><td>${esc(weekdayShort(b.date))} ${esc(dayNum(b.date))}</td><td colspan="6" class="muted">${esc(t('noLog'))}</td></tr>`;
@@ -1082,48 +1085,51 @@ function reportInnerHTML(model) {
         const st = b.stats;
         return `<tr>` +
           `<td>${esc(weekdayShort(b.date))} ${esc(dayNum(b.date))}</td>` +
-          `<td>${b.wake != null ? fmtT(b.wake) : '\u2013'}</td>` +
-          `<td>${st.total ? fmtDur(st.total) : '\u2013'}</td>` +
-          `<td class="amber">${st.needlePct == null ? '\u2013' : st.needlePct + '%'}</td>` +
-          `<td class="pos">${st.green ? fmtDur(st.green) : '\u2013'}</td>` +
-          `<td class="neg">${st.red ? fmtDur(st.red) : '\u2013'}</td>` +
+          `<td class="nowrap">${b.wake != null ? fmtT(b.wake) : '\u2013'}</td>` +
+          `<td class="nowrap">${st.total ? fmtDur(st.total) : '\u2013'}</td>` +
+          `<td class="amber nowrap">${st.needlePct == null ? '\u2013' : st.needlePct + '%'}</td>` +
+          `<td class="pos nowrap">${st.green ? fmtDur(st.green) : '\u2013'}</td>` +
+          `<td class="neg nowrap">${st.red ? fmtDur(st.red) : '\u2013'}</td>` +
           `<td>${st.topAct ? esc(st.topAct) : '\u2013'}</td>` +
         `</tr>`;
       }).join('') +
-      `</tbody></table>`;
+      `</tbody></table></section>`;
   }
 
   if (list.length) {
     const sorted = Object.entries(s.byAct).sort((a, b) => b[1].min - a[1].min);
-    html += `<h2>${esc(t('timePerAct'))}</h2><table><tbody>` +
-      sorted.map(([n, a]) => `<tr><td>${esc(n)}</td><td>${fmtDur(a.min)}</td></tr>`).join('') +
-      `</tbody></table>`;
+    html += `<section class="report-section">` +
+      `<h2>${esc(t('timePerAct'))}</h2><table class="compact"><tbody>` +
+      sorted.map(([n, a]) => `<tr><td>${esc(n)}</td><td class="nowrap">${fmtDur(a.min)}</td></tr>`).join('') +
+      `</tbody></table></section>`;
 
-    html += `<h2>${esc(t('valDist'))}</h2><table><tbody>` +
-      [3, 2, 1].map(v => `<tr><td class="amber">${'$'.repeat(v)}</td><td>${fmtDur(s.byVal[v] || 0)}</td><td>${s.rated ? Math.round((s.byVal[v] || 0) / s.rated * 100) : 0}%</td></tr>`).join('') +
-      `</tbody></table>`;
+    html += `<section class="report-section">` +
+      `<h2>${esc(t('valDist'))}</h2><table class="compact"><tbody>` +
+      [3, 2, 1].map(v => `<tr><td class="amber">${'$'.repeat(v)}</td><td class="nowrap">${fmtDur(s.byVal[v] || 0)}</td><td>${s.rated ? Math.round((s.byVal[v] || 0) / s.rated * 100) : 0}%</td></tr>`).join('') +
+      `</tbody></table></section>`;
   }
 
   bundles.forEach(b => {
     if (!b.list.length && !b.started) return;
-    const heading = `${weekdayShort(b.date)} ${b.date.toLocaleDateString(loc(), { day: 'numeric', month: 'short' })}` +
+    const heading = `${weekdayShort(b.date)} ${b.date.toLocaleDateString(loc(), { day: 'numeric', month: 'long', year: 'numeric' })}` +
       (b.wake != null ? ` \u00B7 ${t('woke')} ${fmtT(b.wake)}` : '');
-    html += `<div class="day-h">${esc(heading)}</div>`;
+    html += `<section class="day-block"><table class="day-table">` +
+      `<thead><tr><th class="day-h" colspan="5">${esc(heading)}</th></tr></thead>`;
     if (!b.list.length) {
-      html += `<div class="muted">${esc(t('noEntries'))}</div>`;
+      html += `<tbody><tr><td colspan="5" class="muted">${esc(t('noEntries'))}</td></tr></tbody></table></section>`;
       return;
     }
     const rows = [...b.list].sort((a, c) => a.start - c.start).map(e => {
       const enClass = e.energy > 0 ? 'pos' : e.energy < 0 ? 'neg' : 'muted';
       return `<tr>` +
-        `<td>${fmtT(e.start)}\u2013${fmtT(e.start + e.dur)}</td>` +
+        `<td class="time">${fmtT(e.start)}\u2013${fmtT(e.start + e.dur)}</td>` +
         `<td>${esc(e.activity)}</td>` +
-        `<td class="amber">${esc(valLabel(e.value))}</td>` +
-        `<td class="${enClass}">${esc(energyWord(e.energy))}</td>` +
+        `<td class="amber nowrap">${esc(valLabel(e.value))}</td>` +
+        `<td class="${enClass} nowrap">${esc(energyWord(e.energy))}</td>` +
         `<td class="note">${e.note ? esc(e.note) : ''}</td>` +
       `</tr>`;
     }).join('');
-    html += `<table><tbody>${rows}</tbody></table>`;
+    html += `<tbody>${rows}</tbody></table></section>`;
   });
 
   return html;

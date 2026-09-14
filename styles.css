@@ -367,27 +367,40 @@ body.no-stamp #log-view { padding-bottom: 48px; }
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
   display: flex; align-items: center; justify-content: center;
-  padding: 24px;
+  padding: max(24px, env(safe-area-inset-top)) 20px max(24px, env(safe-area-inset-bottom));
 }
 #modal-card {
   background: var(--card); border: 1px solid var(--line); border-radius: 14px;
-  padding: 20px; max-width: 340px; width: 100%;
+  padding: 20px; max-width: 340px; width: 100%; min-width: 0;
   display: flex; flex-direction: column; gap: 14px;
+  overflow: hidden;
   -webkit-user-select: none; user-select: none;
   -webkit-touch-callout: none;
 }
 #modal-title { font-size: 15px; font-weight: 600; color: var(--text); }
-#modal-body { display: flex; flex-direction: column; gap: 10px; }
+#modal-body { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
 #modal-body input[type=text], #modal-body input[type=date], #modal-body textarea {
   background: var(--bg); border: 1px solid var(--line); border-radius: 8px;
-  padding: 10px 12px; color: var(--text); font: inherit; font-size: 14px;
-  width: 100%; resize: none; -webkit-user-select: text; user-select: text;
+  padding: 10px 12px; color: var(--text); font: inherit; font-size: 16px;
+  width: 100%; max-width: 100%; min-width: 0; resize: none;
+  -webkit-user-select: text; user-select: text;
   color-scheme: dark;
+}
+#modal-body input[type=date] {
+  -webkit-appearance: none; appearance: none;
+  display: block; flex: none;
+  height: 44px; padding: 0 12px; line-height: 44px;
+  box-sizing: border-box;
+}
+#modal-body input[type=date]::-webkit-date-and-time-value {
+  text-align: left; margin: 0; padding: 0;
+  min-height: 0; height: 44px; line-height: 44px;
 }
 #modal-body input[type=text]:focus, #modal-body input[type=date]:focus, #modal-body textarea:focus { outline: none; border-color: var(--amber); }
 .range-field {
   display: flex; flex-direction: column; gap: 6px;
   font-size: 12px; color: var(--muted); font-weight: 600;
+  min-width: 0; width: 100%;
 }
 #modal-body textarea { min-height: 60px; }
 #modal-actions { display: flex; gap: 8px; }
@@ -475,32 +488,59 @@ body.no-stamp #log-view { padding-bottom: 48px; }
 #print-report { display: none; }
 
 @media print {
-  .topbar, #stampbar, #modal-overlay, #toast, #log-view, #analyse-view { display: none !important; }
+  @page { size: A4; margin: 12mm 12mm 14mm; }
+  .topbar, #stampbar, #modal-overlay, #toast, #log-view, #analyse-view, #act-backdrop { display: none !important; }
   #print-report, #print-report[hidden] { display: block !important; }
   html, body { background: #fff !important; color: #18181b !important; }
   #print-report {
-    position: static; padding: 0; max-width: 720px; margin: 0 auto;
+    position: static; padding: 0; max-width: none; margin: 0;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    color: #18181b; font-size: 12px; line-height: 1.45;
+    color: #18181b; font-size: 11px; line-height: 1.4;
     -webkit-print-color-adjust: exact; print-color-adjust: exact;
   }
-  #print-report h1 { font-size: 20px; margin: 0 0 4px; }
-  #print-report .sub { color: #52525b; margin: 0 0 18px; font-size: 13px; }
+  #print-report h1 { font-size: 20px; margin: 0 0 4px; color: #18181b; }
+  #print-report .sub { color: #52525b; margin: 0 0 14px; font-size: 12px; }
   #print-report h2 {
-    font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em;
-    color: #71717a; margin: 22px 0 8px; font-weight: 700;
+    font-size: 9px; text-transform: uppercase; letter-spacing: 0.08em;
+    color: #71717a; margin: 0 0 8px; font-weight: 700;
+  }
+  #print-report .report-section {
+    break-inside: avoid; page-break-inside: avoid;
+    margin-bottom: 16px;
   }
   #print-report .kpis { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 8px; }
   #print-report .kpi { border: 1px solid #e4e4e7; border-radius: 8px; padding: 10px; background: #fafafa; }
-  #print-report .kpi .kpi-n { font-size: 20px; font-weight: 700; font-family: ui-monospace, Menlo, monospace; }
-  #print-report .kpi .kpi-l { font-size: 9px; color: #71717a; text-transform: uppercase; letter-spacing: 0.08em; }
+  #print-report .kpi .kpi-n {
+    color: #18181b; font-size: 15px; font-weight: 700;
+    font-family: ui-monospace, Menlo, monospace;
+    overflow-wrap: normal; white-space: nowrap; line-height: 1.2;
+  }
+  #print-report .kpi .kpi-n.amber, #print-report .amber { color: #b45309; }
+  #print-report .kpi .kpi-l { font-size: 8px; color: #71717a; text-transform: uppercase; letter-spacing: 0.08em; margin-top: 4px; font-weight: 600; }
   #print-report table { width: 100%; border-collapse: collapse; }
-  #print-report th, #print-report td { padding: 5px 6px; border-bottom: 1px solid #e4e4e7; text-align: left; vertical-align: top; }
-  #print-report th { color: #71717a; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; }
-  #print-report .amber { color: #b45309; font-weight: 700; }
+  #print-report th, #print-report td { padding: 4px 6px; border-bottom: 1px solid #e4e4e7; text-align: left; vertical-align: top; }
+  #print-report th { color: #71717a; font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
+  #print-report tr { break-inside: avoid; page-break-inside: avoid; }
   #print-report .pos { color: #047857; }
   #print-report .neg { color: #b91c1c; }
   #print-report .muted { color: #71717a; }
-  #print-report .day-h { margin-top: 16px; font-size: 14px; font-weight: 700; }
+  #print-report .nowrap, #print-report .time { white-space: nowrap; }
+  #print-report .time { font-variant-numeric: tabular-nums; font-family: ui-monospace, Menlo, monospace; font-size: 10px; }
   #print-report .note { color: #52525b; font-style: italic; }
+  #print-report .day-block {
+    break-inside: avoid; page-break-inside: avoid;
+    margin: 0 0 12px;
+  }
+  #print-report .day-table { table-layout: fixed; }
+  #print-report .day-table td:nth-child(1) { width: 16%; }
+  #print-report .day-table td:nth-child(2) { width: 22%; }
+  #print-report .day-table td:nth-child(3) { width: 8%; }
+  #print-report .day-table td:nth-child(4) { width: 12%; }
+  #print-report .day-table td:nth-child(5) { width: 42%; }
+  #print-report .day-table thead { display: table-header-group; }
+  #print-report .day-table thead th.day-h {
+    text-align: left; font-size: 12px; font-weight: 700; color: #18181b;
+    background: #f4f4f5; border: none; border-bottom: 2px solid #18181b;
+    padding: 8px 6px 6px; text-transform: none; letter-spacing: 0;
+  }
 }
