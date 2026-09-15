@@ -7,7 +7,7 @@ const save = (k, v) => localStorage.setItem(k, JSON.stringify(v));
 
 /* ================= i18n ================= */
 const LOCALES = { de: 'de-DE', en: 'en-US', fr: 'fr-FR' };
-let lang = load(LS.lang, 'de');
+let lang = load(LS.lang, 'en');
 const I18N = {
   de: {
     log: 'Log', analyse: 'Analyse', day: 'Tag', week: 'Woche', today: 'Heute', now: 'Jetzt',
@@ -116,7 +116,7 @@ const I18N = {
   },
 };
 const t = (k, vars) => {
-  let s = (I18N[lang] && I18N[lang][k]) || (I18N.de[k]) || k;
+  let s = (I18N[lang] && I18N[lang][k]) || (I18N.en[k]) || k;
   if (typeof s !== 'string') return s;
   if (vars) for (const v in vars) s = s.replace(`{${v}}`, vars[v]);
   return s;
@@ -129,7 +129,7 @@ const fmtT = min => `${pad(Math.floor((min % 1440) / 60))}:${pad(min % 60)}`; //
 const fmtDur = min => { const h = Math.floor(min / 60), m = min % 60; if (!h) return `${m}m`; return m ? `${h}h ${m}m` : `${h}h`; };
 const uid = () => Math.random().toString(36).slice(2) + Date.now().toString(36);
 const esc = s => { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; };
-const loc = () => LOCALES[lang] || 'de-DE';
+const loc = () => LOCALES[lang] || 'en-US';
 const addDays = (d, n) => { const x = new Date(d.getFullYear(), d.getMonth(), d.getDate()); x.setDate(x.getDate() + n); return x; };
 const startOfWeek = d => addDays(d, -((d.getDay() + 6) % 7)); // Montag
 const weekDays = d => { const mon = startOfWeek(d); return Array.from({ length: 7 }, (_, i) => addDays(mon, i)); };
@@ -184,7 +184,7 @@ const DEFAULT_ACTS = {
   en: ['Production', 'Content', 'Admin', 'Sales', 'Learning', 'Workout', 'Food', 'Break', 'Chores'],
   fr: ['Production', 'Contenu', 'Admin', 'Sales', 'Apprentissage', 'Sport', 'Repas', 'Pause', 'Menage'],
 };
-const defaultActs = () => DEFAULT_ACTS[lang] || DEFAULT_ACTS.de;
+const defaultActs = () => DEFAULT_ACTS[lang] || DEFAULT_ACTS.en;
 const DEFAULT_SPAN = 18;
 const RASTER = 30; // Minuten, fest
 const MAX_CUSTOM_DAYS = 90;
