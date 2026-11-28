@@ -5,8 +5,8 @@ Where does my day actually go – and what gives me energy, what drains it? A fa
 **Live:** https://time-and-energy-audit.vercel.app
 
 <p>
-  <img src="docs/audit-log.jpg" width="280" alt="Daily log">
-  <img src="docs/audit-analysis.jpg" width="280" alt="Analysis">
+  <img src="docs/audit-log.jpg" width="220" alt="Daily log">
+  <img src="docs/audit-analysis.jpg" width="220" alt="Analysis">
 </p>
 
 ## Features
