@@ -4,6 +4,11 @@ Where does my day actually go – and what gives me energy, what drains it? A fa
 
 **Live:** https://time-and-energy-audit.vercel.app
 
+<p>
+  <img src="docs/audit-log.jpg" width="280" alt="Daily log">
+  <img src="docs/audit-analysis.jpg" width="280" alt="Analysis">
+</p>
+
 ## Features
 - **Day starts at wake-up**: the timeline builds from the moment you get up, even past midnight.
 - **One-tap logging**: pick an activity, rate its value ($ / $$ / $$$) and mark its energy (gives / drains).
